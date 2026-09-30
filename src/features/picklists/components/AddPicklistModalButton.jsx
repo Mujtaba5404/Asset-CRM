@@ -1,26 +1,19 @@
-// import AddButton from "../../../components/AddButton";
-// import CanAccess from "../../../components/CanAccess";
-// import PICKLIST_SCOPE from "../../../constants/PICKLIST_SCOPE";
-// import { usePicklists } from "../../../context/PicklistContext";
-
-// const AddPicklistModalButton = () => {
-//   const { featureName, scope, resource, openCreateModal } = usePicklists();
-
-//   return (
-//     <CanAccess resource={scope === PICKLIST_SCOPE.RESOURCE ? resource : "picklist"} action="create">
-//       <AddButton title={`create ${featureName}`} subtitle={`add a new ${featureName}`} onClick={openCreateModal} />
-//     </CanAccess>
-//   );
-// };
-
-// export default AddPicklistModalButton;
-import AddButton from "../../../components/AddButton";
+import { Button } from "@mantine/core";
+import { IconPlus } from "@tabler/icons-react";
+import CanAccess from "../../../components/CanAccess";
+import PICKLIST_SCOPE from "../../../constants/PICKLIST_SCOPE";
 import { usePicklists } from "../../../context/PicklistContext";
 
 const AddPicklistModalButton = () => {
-  const { featureName, openCreateModal } = usePicklists();
+  const { featureName, scope, resource, openCreateModal } = usePicklists();
 
-  return <AddButton title={`create ${featureName}`} subtitle={`add a new ${featureName}`} onClick={openCreateModal} />;
+  return (
+    <CanAccess resource={scope === PICKLIST_SCOPE.RESOURCE ? resource : "picklist"} action="create">
+      <Button leftSection={<IconPlus size={16} />} tt="capitalize" onClick={openCreateModal}>
+        Add {featureName}
+      </Button>
+    </CanAccess>
+  );
 };
 
 export default AddPicklistModalButton;

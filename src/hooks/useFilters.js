@@ -80,7 +80,10 @@ const serializeDatesDeep = (value) => {
  *
  * resetFilters();
  */
-const useFilters = (initialFilters = {}) => {
+/** Stable identity so callers can write `useFilters()` without re-running the memo every render. */
+const NO_INITIAL_FILTERS = Object.freeze({});
+
+const useFilters = (initialFilters = NO_INITIAL_FILTERS) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters = useMemo(() => {

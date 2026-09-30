@@ -1,47 +1,35 @@
-import { Paper, ScrollArea, Tabs } from "@mantine/core";
-import { upperFirst } from "@mantine/hooks";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { IconListSearch } from "@tabler/icons-react";
+import { Navigate, useParams } from "react-router-dom";
+import EmptyState from "../components/EmptyState";
+import { DEFAULT_PICKLIST_SLUG, findPicklistItem } from "../features/picklists/picklistRegistry";
 
-const tabList = [
-  { label: upperFirst("asset status"), value: "asset-status", index: true },
-  { label: upperFirst("asset categories"), value: "asset-categories" },
-  { label: upperFirst("asset sub categories"), value: "asset-sub-categories" },
-  { label: upperFirst("asset locations"), value: "asset-locations" },
-  { label: upperFirst("asset conditions"), value: "asset-conditions" },
-  { label: upperFirst("warranty providers"), value: "warranty-providers" },
-  { label: upperFirst("disposal reasons"), value: "disposal-reasons" },
-];
-
+/**
+ * Resolves `/settings/picklists/:slug` to the screen registered for that slug.
+ *
+ * One route instead of ~50 hand-written ones — adding a picklist means adding a
+ * row to the registry.
+ */
 const Picklists = () => {
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { slug } = useParams();
 
-  const indexTab = tabList.find((tab) => tab.index);
+  if (!slug) return <Navigate to={DEFAULT_PICKLIST_SLUG} replace />;
 
-  const pathParts = pathname.split("/");
-  const lastSegment = pathParts[pathParts.length - 1];
+  const item = findPicklistItem(slug);
 
-  const activeTab = tabList.find((tab) => tab.value === lastSegment)?.value || indexTab.value;
+  if (!item) {
+    return (
+      <EmptyState
+        title="Unknown list"
+        description={`“${slug}” is not a configurable list. Pick one from the list on the left.`}
+        icon={<IconListSearch size={26} />}
+      />
+    );
+  }
 
-  return (
-    <>
-      <Tabs variant="pills" mb="lg" value={activeTab} onChange={(value) => navigate(`/admin-settings/picklists/${value}`)}>
-        <Paper p={4}>
-          <ScrollArea w="100%" scrollbars="x" scrollbarSize={10}>
-            <Tabs.List style={{ flexWrap: "nowrap" }}>
-              {tabList.map((tab, i) => (
-                <Tabs.Tab key={i} value={tab.value}>
-                  {tab.label}
-                </Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </ScrollArea>
-        </Paper>
-      </Tabs>
+  const Screen = item.element;
 
-      <Outlet />
-    </>
-  );
+  // Keyed so switching lists resets the create/edit form state.
+  return <Screen key={slug} />;
 };
 
 export default Picklists;

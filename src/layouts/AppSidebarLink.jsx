@@ -1,62 +1,108 @@
-import { Badge, Box, Indicator, Menu, NavLink, Tooltip } from "@mantine/core";
+import { Badge, Collapse, Menu, Tooltip } from "@mantine/core";
+import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import { useState } from "react";
 import { Link, matchPath, useLocation } from "react-router-dom";
+import classes from "./Appsidebar.module.css";
 
 const isMatch = (path, pathname) => !!matchPath({ path, end: false }, pathname);
-const radius = "var(--mantine-radius-md)";
-const expandedStyles = { root: { borderRadius: radius, height: 42 }, label: { fontWeight: 500 } };
-const collapsedStyles = { root: { borderRadius: radius, width: 44, height: 44, justifyContent: "center" }, section: { margin: 0 }, body: { display: "none" } };
-const timeline = { root: { borderRadius: radius, height: 36 }, children: { marginInlineStart: 22, paddingInlineStart: 8, borderInlineStart: "1px solid var(--mantine-color-default-border)" } };
 
+/**
+ * One sidebar entry.
+ *
+ * State lives on the icon tile — outlined when idle, brand-gradient when active —
+ * so the current page reads at a glance even in the collapsed icon rail, where
+ * labels are hidden.
+ */
 const AppSidebarLink = ({ link: { title, path, icon: Icon, count = 0, children }, collapsed }) => {
   const { pathname } = useLocation();
-  const active = children ? children.some((c) => isMatch(c.path, pathname)) : isMatch(path, pathname);
-  const icon = <Icon size={20} stroke={1.6} />;
-  const nav = children ? {} : { component: Link, to: path };
 
+  const active = children ? children.some((child) => isMatch(child.path, pathname)) : isMatch(path, pathname);
+
+  const [opened, setOpened] = useState(active);
+
+  const icon = (
+    <span className={classes.linkIcon}>
+      <Icon size={19} stroke={1.7} />
+    </span>
+  );
+
+  const badge =
+    count > 0 ? (
+      <Badge className={classes.linkBadge} size="sm" circle variant={active ? "filled" : "light"}>
+        {count > 9 ? "9+" : count}
+      </Badge>
+    ) : null;
+
+  /* ---------------------------------------------------- collapsed icon rail */
   if (collapsed) {
-    const trigger = (
-      <Indicator disabled={!count} size={8} offset={8}>
-        <NavLink {...nav} active={active} variant="filled" leftSection={icon} aria-label={title} styles={collapsedStyles} />
-      </Indicator>
+    const railLink = (
+      <Link to={children ? (children[0]?.path ?? path) : path} className={classes.link} data-active={active || undefined} aria-label={title}>
+        {icon}
+      </Link>
     );
 
-    return children ? (
+    if (!children) {
+      return (
+        <Tooltip label={title} position="right" withArrow offset={14}>
+          {railLink}
+        </Tooltip>
+      );
+    }
+
+    return (
       <Menu trigger="hover" position="right-start" offset={14} withArrow>
-        <Menu.Target>{trigger}</Menu.Target>
+        <Menu.Target>{railLink}</Menu.Target>
+
         <Menu.Dropdown>
           <Menu.Label>{title}</Menu.Label>
-          {children.map((c) => (
-            <Menu.Item key={c.path} component={Link} to={c.path} c={isMatch(c.path, pathname) ? "var(--mantine-primary-color-filled)" : undefined}>{c.title}</Menu.Item>
+
+          {children.map((child) => (
+            <Menu.Item key={child.path} component={Link} to={child.path} c={isMatch(child.path, pathname) ? "var(--mantine-primary-color-filled)" : undefined}>
+              {child.title}
+            </Menu.Item>
           ))}
         </Menu.Dropdown>
       </Menu>
-    ) : (
-      <Tooltip label={title} position="right" withArrow offset={14}>{trigger}</Tooltip>
     );
   }
 
+  /* ------------------------------------------------------- expanded, nested */
+  if (children) {
+    return (
+      <>
+        <button type="button" className={classes.link} data-active={active || undefined} aria-expanded={opened} onClick={() => setOpened((value) => !value)}>
+          {icon}
+          <span className={classes.linkLabel}>{title}</span>
+          {opened ? <IconChevronDown size={15} /> : <IconChevronRight size={15} />}
+        </button>
+
+        <Collapse in={opened}>
+          <div className={classes.sublist}>
+            {children.map((child) => (
+              <Link key={child.path} to={child.path} className={classes.sublink} data-active={isMatch(child.path, pathname) || undefined}>
+                <span className={classes.subdot} />
+                {child.title}
+              </Link>
+            ))}
+          </div>
+        </Collapse>
+      </>
+    );
+  }
+
+  /* ---------------------------------------------------------- expanded, flat */
   return (
-    <NavLink
-      {...nav}
-      label={title}
-      leftSection={icon}
-      active={active}
-      variant="filled"
-      defaultOpened={active}
-      childrenOffset={0}
-      styles={children ? { ...expandedStyles, children: timeline.children } : expandedStyles}
-      rightSection={!children && count > 0 && <Badge size="sm" circle variant={active ? "white" : "light"}>{count > 9 ? "9+" : count}</Badge>}
-    >
-      {children?.map((c) => {
-        const childActive = isMatch(c.path, pathname);
-        return (
-          <NavLink
-            key={c.path} component={Link} to={c.path} label={c.title} active={childActive} variant="subtle" styles={timeline}
-            leftSection={<Box w={7} h={7} bg={childActive ? "var(--mantine-primary-color-filled)" : "var(--mantine-color-default-border)"} style={{ borderRadius: "50%" }} />}
-          />
-        );
-      })}
-    </NavLink>
+    <Link to={path} className={classes.link} data-active={active || undefined}>
+      {icon}
+
+      <span className={classes.linkLabel}>{title}</span>
+
+      {badge}
+
+      <span className={classes.linkArrow} aria-hidden="true">
+        <IconChevronRight size={15} />
+      </span>
+    </Link>
   );
 };
 

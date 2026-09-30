@@ -1,12 +1,58 @@
-/* General styling */
-* {
-  padding: 0;
-  margin: 0;
+/* ==========================================================================
+   Asset360 CRM — global styles
+   Design tokens live in mantine.config.js; this file only covers the
+   document shell, scrollbars, and third-party (DataTable) polish.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
+* {
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background-color: #f8f8f8;
+  background-color: var(--app-bg);
+  color: var(--mantine-color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+:root {
+  --app-bg: #f5f6f8;
+  --app-surface: #ffffff;
+  --app-surface-muted: #fafbfc;
+  --app-hairline: rgba(11, 15, 25, 0.08);
+
+  /* Data-viz roles — see the chart components. Validated against the
+     Paper surface each mode actually renders on (#ffffff / #1f2937). */
+  --viz-fill: #fd7e14;
+  --viz-track: #ffe8cc;
+  --viz-grid: #e6e8ec;
+  --viz-axis: #c9ccd3;
+}
+
+[data-mantine-color-scheme="dark"] {
+  --app-bg: #0b0f19;
+  --app-surface: #1f2937;
+  --app-surface-muted: #151d2b;
+  --app-hairline: rgba(255, 255, 255, 0.09);
+
+  --viz-fill: #ffa94d;
+  --viz-track: rgba(255, 169, 77, 0.18);
+  --viz-grid: #2b3444;
+  --viz-axis: #374151;
 }
 
 ul,
@@ -14,48 +60,112 @@ ol {
   margin-left: 1em;
 }
 
-input[type="number"]::-webkit-inner-spin-button {
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
+  margin: 0;
 }
 
-[data-mantine-color-scheme="dark"] body {
-  background-color: #030712;
-}
-
-[data-mantine-color-scheme="dark"] .mantine-RichTextEditor-content {
-  background: #1f2937;
+svg.tabler-icon {
+  stroke-width: 1.6;
 }
 
 :is(.mantine-Select-option[data-checked], .mantine-MultiSelect-option[data-checked]) svg {
   color: var(--mantine-primary-color-filled);
 }
 
-svg.tabler-icon {
-  stroke-width: 1.5;
+/* --------------------------------------------------------------------------
+   Scrollbars — thin and recessive, so dense tables don't get noisy
+   -------------------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-dimmed) transparent;
 }
 
-/* Background pattern */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--app-hairline);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--mantine-color-dimmed);
+  background-clip: content-box;
+}
+
+/* --------------------------------------------------------------------------
+   mantine-datatable polish
+   -------------------------------------------------------------------------- */
+.mantine-datatable-header th {
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+  background-color: var(--app-surface-muted);
+  white-space: nowrap;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-datatable-header th {
+  background-color: var(--mantine-color-dark-7);
+}
+
+.mantine-datatable-row td {
+  font-size: var(--mantine-font-size-sm);
+}
+
+.mantine-datatable-pagination {
+  border-top: 1px solid var(--mantine-color-default-border);
+  font-size: var(--mantine-font-size-xs);
+}
+
+/* --------------------------------------------------------------------------
+   Decorative page background (auth / 404). CSS-only — no image asset.
+   -------------------------------------------------------------------------- */
+.pattern-bg {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
 .pattern-bg::before {
   content: "";
-  width: 100%;
-  height: 100%;
   position: absolute;
-  top: 0;
-  left: 0;
-  background: url("src/assets/bg.svg");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  opacity: 0.15;
-  filter: invert(1);
+  inset: 0;
   z-index: -1;
+  background-image:
+    radial-gradient(60rem 40rem at 12% -10%, color-mix(in srgb, var(--mantine-primary-color-filled) 22%, transparent), transparent 70%),
+    radial-gradient(45rem 35rem at 105% 15%, color-mix(in srgb, var(--mantine-color-blue-6) 16%, transparent), transparent 70%),
+    linear-gradient(var(--app-hairline) 1px, transparent 1px),
+    linear-gradient(90deg, var(--app-hairline) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    2.5rem 2.5rem,
+    2.5rem 2.5rem;
+  opacity: 0.85;
 }
 
-[data-mantine-color-scheme="dark"] .pattern-bg::before {
-  filter: none;
+/* --------------------------------------------------------------------------
+   Rich text editor surface
+   -------------------------------------------------------------------------- */
+[data-mantine-color-scheme="dark"] .mantine-RichTextEditor-content {
+  background: var(--mantine-color-dark-6);
 }
 
-/* Loader  */
+/* --------------------------------------------------------------------------
+   Legacy loader + grid-table helpers (kept for existing markup)
+   -------------------------------------------------------------------------- */
 .loader {
   --dimensions: 4rem;
   width: var(--dimensions);
@@ -77,7 +187,6 @@ svg.tabler-icon {
   }
 }
 
-/* Grid Table */
 .grid-table {
   max-width: 100%;
   overflow: auto;
@@ -126,4 +235,18 @@ svg.tabler-icon {
   position: sticky;
   right: 0;
   z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Motion preferences
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

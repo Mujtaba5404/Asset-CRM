@@ -1,12 +1,12 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import Login from "./features/auth/Login";
 import RequireAuth from "./components/RequireAuth";
+import Login from "./features/auth/Login";
 import AppLayout from "./layouts/AppLayout";
+import { HOME_PATH } from "./layouts/navigation";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-import { adminSettingsRoutes } from "./routes/adminSettings";
 import { assetRoutes } from "./routes/assets";
-
-const HOME = "/assets/dashboard";
+import { legacySettingsRoutes, settingsRoutes } from "./routes/settings";
 
 const App = () => (
   <Routes>
@@ -14,10 +14,12 @@ const App = () => (
 
     <Route element={<RequireAuth />}>
       <Route element={<AppLayout />}>
-        <Route index element={<Navigate to={HOME} replace />} />
-        <Route path="dashboard" element={<Navigate to={HOME} replace />} />
+        <Route index element={<Navigate to={HOME_PATH} replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+
         {assetRoutes}
-        {adminSettingsRoutes}
+        {settingsRoutes}
+        {legacySettingsRoutes}
       </Route>
     </Route>
 

@@ -1,13 +1,13 @@
-import { Divider, Group, Paper, Stack, Text } from "@mantine/core";
+import { Box, Divider, Group, Paper, Stack, Text } from "@mantine/core";
 import { Children, Fragment } from "react";
-import classes from "../index.module.css";
 
-const InfoList = ({ children, ...props }) => {
+/** A divided list of icon + label + value rows. */
+const InfoList = ({ children, p = "md", ...props }) => {
   const items = Children.toArray(children);
 
   return (
-    <Paper p="md" tt={"capitalize"} {...props}>
-      <Stack>
+    <Paper p={p} {...props}>
+      <Stack gap="sm">
         {items.map((item, index) => (
           <Fragment key={index}>
             {item}
@@ -20,26 +20,36 @@ const InfoList = ({ children, ...props }) => {
   );
 };
 
-InfoList.Item = ({ icon, label, fallback = "-", children }) => {
-  const content = children || fallback;
+const InfoListItem = ({ icon, label, fallback = "—", children }) => {
+  const content = children ?? fallback;
 
   return (
-    <Group>
-      {icon && (
-        <div className={classes.icon} size={18}>
-          {icon}
-        </div>
-      )}
+    <Group gap="sm" wrap="nowrap" justify="space-between">
+      <Group gap="sm" wrap="nowrap" miw={0}>
+        {icon && (
+          <Box c="dimmed" style={{ display: "flex", flexShrink: 0 }}>
+            {icon}
+          </Box>
+        )}
 
-      <Stack gap={0}>
-        <Text size="xs" c={"dimmed"}>
+        <Text fz="xs" c="dimmed" tt="capitalize">
           {label}
         </Text>
+      </Group>
 
-        {typeof content === "string" ? <Text size="sm">{content}</Text> : content}
-      </Stack>
+      <Box style={{ flexShrink: 0, textAlign: "right" }}>
+        {typeof content === "string" || typeof content === "number" ? (
+          <Text fz="sm" fw={550} tt="capitalize">
+            {content}
+          </Text>
+        ) : (
+          content
+        )}
+      </Box>
     </Group>
   );
 };
+
+InfoList.Item = InfoListItem;
 
 export default InfoList;

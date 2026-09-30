@@ -1,22 +1,47 @@
-import { Group, Text } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
-import SCOPE from "../constants/SCOPE";
+import { ActionIcon, Burger, Group, Modal, Text, ThemeIcon, Tooltip } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconHexagonLetterA, IconSearch } from "@tabler/icons-react";
 import UserMenu from "../components/UserMenu";
-import Logo from "../components/Logo";
+import AssetQuickSearch from "../features/assets/AssetQuickSearch";
 
-const AppHeader = () => {
-  const [auth] = useLocalStorage({ key: "auth", getInitialValueInEffect: false });
-  const CAN_SELECT_COMPANY = [SCOPE.ALL, SCOPE.COMPANY].includes(auth?.effectiveScope);
+const AppHeader = ({ navbarOpened = false, onToggleNavbar }) => {
+  const [searchOpened, { open: openSearch, close: closeSearch }] = useDisclosure(false);
 
   return (
-    <Group h="100%" justify="space-between">
-  <Logo w={130} />
+    <>
+      <Modal opened={searchOpened} onClose={closeSearch} title="Quick find" size="lg">
+        <AssetQuickSearch autoFocus onNavigate={closeSearch} />
+      </Modal>
 
-  <Group gap="sm">
-    <Text tt="capitalize" visibleFrom="sm">👋 Hi, {auth?.name}!</Text>
-    <UserMenu />
-  </Group>
-</Group>
+      <Group h="100%" gap="sm" justify="space-between" wrap="nowrap">
+        <Group gap="sm" wrap="nowrap" miw={0}>
+          <Burger opened={navbarOpened} onClick={onToggleNavbar} hiddenFrom="md" size="sm" aria-label="Toggle navigation" />
+
+          {/* The sidebar owns the brand on desktop; the header takes over once it hides. */}
+          <Group gap={8} wrap="nowrap" hiddenFrom="md">
+            <ThemeIcon size={30} radius="md" variant="filled">
+              <IconHexagonLetterA size={18} />
+            </ThemeIcon>
+            <Text fz="sm" fw={700}>
+              Asset360
+            </Text>
+          </Group>
+        </Group>
+
+        <Group gap="xs" wrap="nowrap" flex={1} justify="flex-end" miw={0}>
+          <AssetQuickSearch visibleFrom="sm" flex={1} maw={420} />
+
+          <Tooltip label="Quick find" withArrow>
+            <ActionIcon hiddenFrom="sm" size="lg" variant="subtle" onClick={openSearch} aria-label="Quick find">
+              <IconSearch size={18} />
+            </ActionIcon>
+          </Tooltip>
+
+          {/* Light/dark switching lives in the account menu. */}
+          <UserMenu />
+        </Group>
+      </Group>
+    </>
   );
 };
 

@@ -1,47 +1,48 @@
 import { ActionIcon, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconDots, IconEye, IconMessagePlus, IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconDots, IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
+import { useDeleteAssetMutation } from "../../api/asset";
 import CanAccess from "../../components/CanAccess";
 import DeleteItemButton from "../../components/DeleteItemButton";
-import { useDeleteAssetMutation } from "../../api/asset";
+import EditAssetModal from "./EditAssetModal";
 
-const AssetTableRowMenu = ({ asset, compact = false }) => {
-  const [addCommentModalOpened, { open: openAddCommentModal, close: closeAddCommentModal }] = useDisclosure(false);
-  const [editClientModalOpened, { open: openEditClientModal, close: closeEditClientModal }] = useDisclosure(false);
+const AssetTableRowMenu = ({ asset }) => {
+  const [editOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false);
 
   return (
     <>
-      {/* <AddCommentModal isOpen={addCommentModalOpened} onClose={closeAddCommentModal} resource={"Client"} resourceId={client._id} />
-      <EditClientModal isOpen={editClientModalOpened} onClose={closeEditClientModal} client={client} compact={compact} /> */}
+      <EditAssetModal asset={asset} isOpen={editOpened} onClose={closeEdit} />
 
-      <Menu position="bottom-end">
+      <Menu position="bottom-end" withinPortal>
         <Menu.Target>
-          <ActionIcon>
+          <ActionIcon aria-label="Asset actions" onClick={(event) => event.stopPropagation()}>
             <IconDots size={18} />
           </ActionIcon>
         </Menu.Target>
 
         <Menu.Dropdown>
-          {/* <CanAccess resource="assets" action="read"> */}
-            <Menu.Item component={Link} to={`/assets/${asset._id}`} leftSection={<IconEye size={18} />}>
+          <CanAccess resource="asset" action="read">
+            <Menu.Item component={Link} to={`/assets/${asset._id}`} leftSection={<IconEye size={16} />}>
               View
             </Menu.Item>
-          {/* </CanAccess> */}
+          </CanAccess>
 
-          {/* <CanAccess resource="assets" action="update"> */}
-            <Menu.Item leftSection={<IconPencil size={18} />} onClick={openEditClientModal}>
+          <CanAccess resource="asset" action="update">
+            <Menu.Item leftSection={<IconPencil size={16} />} onClick={openEdit}>
               Edit
             </Menu.Item>
-          {/* </CanAccess> */}
+          </CanAccess>
 
-          <Menu.Divider />
+          <CanAccess resource="asset" action="delete">
+            <Menu.Divider />
 
-          <DeleteItemButton label="assets" mutationHook={useDeleteAssetMutation} itemId={asset._id}>
-            <Menu.Item color="red" leftSection={<IconTrash size={18} />} onClick={(e) => e.stopPropagation()}>
-              Delete
-            </Menu.Item>
-          </DeleteItemButton>
+            <DeleteItemButton resource="asset" label="asset" mutationHook={useDeleteAssetMutation} itemId={asset._id}>
+              <Menu.Item color="red" leftSection={<IconTrash size={16} />} onClick={(event) => event.stopPropagation()}>
+                Delete
+              </Menu.Item>
+            </DeleteItemButton>
+          </CanAccess>
         </Menu.Dropdown>
       </Menu>
     </>

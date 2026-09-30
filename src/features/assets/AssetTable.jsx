@@ -1,140 +1,159 @@
-import { Badge, Button, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
-import { DatePicker } from "@mantine/dates";
+import { Anchor, Avatar, Badge, Group, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Link } from "react-router-dom";
 import { useGetAssetsWithPaginationQuery } from "../../api/asset";
 import PaginatedTable from "../../components/PaginatedTable";
+import PicklistBadge from "../../components/PicklistBadge";
 import useFilters from "../../hooks/useFilters";
 import formatAmount from "../../utils/formatAmount";
 import formatDate from "../../utils/formatDate";
+import getAbbreviation from "../../utils/getAbbreviation";
+import AssetCard from "./AssetCard";
 import AssetTableRowMenu from "./AssetTableRowMenu";
+import AssetWarrantyBadge from "./AssetWarrantyBadge";
 
 const TwoLine = ({ top, bottom }) => (
-  <Stack gap={0}>
-    <Text size="sm" tt="capitalize">{top || "-"}</Text>
-    <Text size="xs" c="dimmed" tt="capitalize">{bottom || "-"}</Text>
+  <Stack gap={0} miw={0}>
+    <Text fz="sm" fw={500} tt="capitalize" truncate>
+      {top || "—"}
+    </Text>
+    <Text fz="xs" c="dimmed" tt="capitalize" truncate>
+      {bottom || "—"}
+    </Text>
   </Stack>
 );
 
-
-// const picklistFilter = (field, filters, setFilters) => ({
-//   filter: (
-//     <PicklistsMultiSelect
-//       queryObject={{ resource: "Asset", field }}
-//       multiSelectProps={{
-//         size: "xs",
-//         placeholder: `Select ${field}`,
-//         value: filters[field] || [],
-//         onChange: (value) => setFilters({ [field]: value }),
-//         comboboxProps: { withinPortal: false },
-//       }}
-//     />
-//   ),
-//   filtering: filters[field]?.length,
-// });
-
-const DEFAULT_COLUMNS = (filters, setFilters) => [
+/**
+ * Filtering lives in the <AssetFilters /> drawer rather than per-column popovers,
+ * so there is one place that owns the query and one place that shows what is on.
+ */
+const ASSET_COLUMNS = [
   {
-    accessor: "createdAt",
-    title: "Date",
-    width: 120,
-    textAlign: "center",
-    sortable: true,
-    filter: ({ close }) => (
-      <Stack gap="xs">
-        <DatePicker size="xs" type="range" value={filters.createdAt} onChange={(value) => setFilters({ createdAt: value })} />
-        <Button size="xs" onClick={() => { setFilters({ createdAt: [] }); close(); }}>Clear</Button>
-      </Stack>
+    accessor: "asset",
+    title: "Asset",
+    width: 280,
+    noWrap: true,
+    render: (asset) => (
+      <Group gap="sm" wrap="nowrap" miw={0}>
+        <Avatar size={34} radius="md" color={asset.category?.color || "gray"}>
+          {getAbbreviation(asset.subCategory?.title || asset.serialNumber)}
+        </Avatar>
+
+        <Stack gap={0} miw={0}>
+          <Anchor component={Link} to={`/assets/${asset._id}`} fz="sm" fw={600} c="inherit" truncate>
+            {asset.serialNumber || "—"}
+          </Anchor>
+
+          <Text fz="xs" c="dimmed" truncate>
+            {asset.description || "No description"}
+          </Text>
+        </Stack>
+      </Group>
     ),
-    filtering: filters.createdAt?.length,
-    render: (row) => formatDate(row.createdAt),
   },
   {
     accessor: "tag",
-    width: 160,
+    title: "Tag",
+    width: 140,
     textAlign: "center",
     sortable: true,
-    filter: <TextInput size="xs" placeholder="Search by tag" value={filters.tag || ""} onChange={(e) => setFilters({ tag: e.target.value })} />,
-    filtering: filters.tag,
-    render: (row) => <Badge variant="light">{row.tag}</Badge>,
-  },
-  {
-    accessor: "asset",
-    width: 240,
-    filter: <TextInput size="xs" placeholder="Search by serial number" value={filters.serialNumber || ""} onChange={(e) => setFilters({ serialNumber: e.target.value })} />,
-    filtering: filters.serialNumber,
-    render: (row) => (
-      <UnstyledButton component={Link} to={`/assets/${row._id}`}>
-        <Text size="sm">{row.serialNumber}</Text>
-        <Text size="xs" c="dimmed" lineClamp={1}>{row.description || "-"}</Text>
-      </UnstyledButton>
-    ),
+    render: (asset) =>
+      asset.tag ? (
+        <Badge variant="outline" color="gray">
+          {asset.tag}
+        </Badge>
+      ) : (
+        <Text fz="sm" c="dimmed">
+          —
+        </Text>
+      ),
   },
   {
     accessor: "category",
-    width: 150,
-    // ...picklistFilter("category", filters, setFilters),
-    render: (row) => <TwoLine top={row.subCategory?.title} bottom={row.category?.title} />,
+    title: "Category",
+    width: 170,
+    render: (asset) => <TwoLine top={asset.subCategory?.title} bottom={asset.category?.title} />,
   },
   {
     accessor: "location",
-    width: 150,
-    // ...picklistFilter("location", filters, setFilters),
-    render: (row) => <TwoLine top={row.location?.title} bottom={row.company?.title} />,
+    title: "Location",
+    width: 170,
+    render: (asset) => <TwoLine top={asset.location?.title} bottom={asset.company?.title} />,
   },
   {
     accessor: "status",
+    title: "Status",
     width: 130,
     textAlign: "center",
-    // ...picklistFilter("status", filters, setFilters),
-    render: (row) => <Badge color={row.status?.color} tt="capitalize">{row.status?.title || "-"}</Badge>,
+    render: (asset) => <PicklistBadge item={asset.status} />,
   },
   {
     accessor: "condition",
-    width: 120,
+    title: "Condition",
+    width: 130,
     textAlign: "center",
-    render: (row) => <Badge color={row.condition?.color} tt="capitalize">{row.condition?.title || "-"}</Badge>,
+    render: (asset) => <PicklistBadge item={asset.condition} />,
   },
   {
     accessor: "purchaseAmount",
     title: "Purchase",
-    width: 140,
-    textAlign: "left",
+    width: 150,
     sortable: true,
-    render: (row) => <TwoLine top={formatAmount(row.purchaseAmount || 0)} bottom={formatDate(row.purchaseDate)} />,
+    render: (asset) => <TwoLine top={formatAmount(asset.purchaseAmount || 0)} bottom={formatDate(asset.purchaseDate)} />,
   },
   {
     accessor: "warranty",
-    width: 140,
-    textAlign: "left",
-    render: ({ warranty }) => (warranty?.isWarrantied ? <TwoLine top={formatDate(warranty.endDate)} bottom={warranty.provider?.title} /> : <Text size="sm" c="dimmed">No warranty</Text>),
+    title: "Warranty",
+    width: 150,
+    render: (asset) => <AssetWarrantyBadge warranty={asset.warranty} />,
   },
   {
     accessor: "expiryDate",
     title: "Expiry",
-    width: 120,
+    width: 130,
     textAlign: "center",
     sortable: true,
-    render: (row) => (row.hasExpiry ? formatDate(row.expiryDate) : "-"),
+    render: (asset) =>
+      asset.hasExpiry ? (
+        formatDate(asset.expiryDate)
+      ) : (
+        <Text fz="sm" c="dimmed">
+          —
+        </Text>
+      ),
+  },
+  {
+    accessor: "createdAt",
+    title: "Created",
+    width: 130,
+    textAlign: "center",
+    sortable: true,
+    render: (asset) => formatDate(asset.createdAt),
   },
   {
     accessor: "menu",
-    width: 60,
+    title: "Menu",
+    width: 80,
     textAlign: "center",
-    render: (row) => <AssetTableRowMenu asset={row} compact />,
+    render: (asset) => <AssetTableRowMenu asset={asset} />,
   },
 ];
 
-const AssetTable = ({ query, hideColumns = [] }) => {
+const AssetTable = ({ query, hideColumns = [], emptyAction }) => {
   const [globalFilters] = useLocalStorage({ key: "globalFilters", getInitialValueInEffect: false });
-  const { filters, setFilters } = useFilters({});
+  const { filters } = useFilters();
 
   return (
     <PaginatedTable
       queryHook={useGetAssetsWithPaginationQuery}
-      columns={DEFAULT_COLUMNS(filters, setFilters)}
+      columns={ASSET_COLUMNS}
       queryParams={{ ...globalFilters, ...filters, ...query }}
       hideColumns={hideColumns}
+      renderCard={(asset) => <AssetCard asset={asset} />}
+      emptyTitle="No assets match this view"
+      emptyDescription="Try widening or clearing the filters, or register your first asset."
+      emptyAction={emptyAction}
+      tableProps={{ pinFirstColumn: true }}
     />
   );
 };

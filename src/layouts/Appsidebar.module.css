@@ -1,51 +1,325 @@
+/* ==========================================================================
+   App sidebar — gradient brand mark, icon-tile navigation, soft brand glow.
+   Collapsed state is driven by [data-collapsed] on .sidebar.
+   ========================================================================== */
+
 .sidebar {
+  --brand-from: var(--mantine-primary-color-5);
+  --brand-to: var(--mantine-primary-color-7);
+  --brand-gradient: linear-gradient(135deg, var(--brand-from), var(--brand-to));
+  --brand-tint: color-mix(in srgb, var(--mantine-primary-color-filled) 10%, transparent);
+  --brand-edge: color-mix(in srgb, var(--mantine-primary-color-filled) 35%, transparent);
+
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--mantine-spacing-md);
-  padding: var(--mantine-spacing-lg) 0 var(--mantine-spacing-md) var(--mantine-spacing-sm);
   background: var(--mantine-color-body);
-  box-shadow: inset -1px 0 0 var(--mantine-color-default-border);
 }
 
-.nav { flex: 1; overflow: hidden auto; scrollbar-width: none; padding-block: 20px; }
-.label { margin: 18px 0 6px 14px; font-size: 11px; font-weight: 600; color: var(--mantine-color-dimmed); }
-.nav > .label:first-child { margin-top: 0; }
-.sidebar[data-collapsed] .label { height: 1px; margin: 14px 18px 14px 6px; font-size: 0; background: var(--mantine-color-default-border); }
+/* Signature hairline: a gradient edge along the top of the rail. */
+.sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 3;
+  background: var(--brand-gradient);
+}
 
+/* Warm brand glow pooling at the bottom, so a short nav never looks unfinished. */
+.glow {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 220px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(125% 85% at 50% 125%, color-mix(in srgb, var(--brand-from) 18%, transparent), transparent 72%);
+}
+
+/* --------------------------------------------------------------- brand ---- */
+.brand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 62px;
+  flex-shrink: 0;
+  padding-inline: 14px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.sidebar[data-collapsed] .brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.brandTile {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 11px;
+  color: #fff;
+  background: var(--brand-gradient);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-to) 40%, transparent);
+}
+
+.brandText {
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.brandName {
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brandKicker {
+  display: block;
+  margin-top: 1px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+}
+
+/* -------------------------------------------------------------- actions --- */
+.actions {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  padding: 12px 12px 2px;
+}
+
+.sidebar[data-collapsed] .actions {
+  display: flex;
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* ------------------------------------------------------------------ nav --- */
+.nav {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  padding: 0 12px 12px;
+}
+
+.sidebar[data-collapsed] .nav {
+  padding-inline: 16px;
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 16px 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--mantine-color-dimmed);
+}
+
+.sectionLabel::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--mantine-color-default-border);
+}
+
+/* Collapsed: the label collapses into the divider it already carries. */
+.sidebar[data-collapsed] .sectionLabel {
+  gap: 0;
+  padding: 14px 0 12px;
+  font-size: 0;
+}
+
+/* ----------------------------------------------------------------- link --- */
 .link {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 44px;
-  margin-block: 3px;
-  padding-inline: 14px;
-  border-radius: 22px 0 0 22px;
+  gap: 11px;
+  width: 100%;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: var(--mantine-radius-md);
+  background: none;
   color: var(--mantine-color-text);
+  font: inherit;
   font-size: var(--mantine-font-size-sm);
   font-weight: 500;
+  text-align: left;
   text-decoration: none;
-  transition: background-color 160ms ease, color 160ms ease;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 }
-.sidebar[data-collapsed] .link { justify-content: center; padding-inline: 0; }
-.link:hover { background: var(--mantine-primary-color-light); color: var(--mantine-primary-color-light-color); }
-.link:focus-visible { outline: 2px solid var(--mantine-primary-color-filled); outline-offset: -4px; }
 
-/* Active: orange tab jo right edge se curves ke saath judta hai */
-.link[aria-current="page"] { background: var(--mantine-primary-color-filled); color: var(--mantine-primary-color-contrast); font-weight: 600; }
-.link[aria-current="page"]::before,
-.link[aria-current="page"]::after {
+.sidebar[data-collapsed] .link {
+  width: auto;
+  gap: 0;
+  padding: 5px 0;
+  justify-content: center;
+}
+
+.link:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}
+
+/* The icon tile is the state carrier: outlined when idle, brand-filled when active. */
+.linkIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  color: var(--mantine-color-dimmed);
+  background: var(--app-surface-muted);
+  border: 1px solid var(--mantine-color-default-border);
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.link:hover .linkIcon {
+  color: var(--mantine-primary-color-filled);
+  border-color: var(--brand-edge);
+}
+
+.linkLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.linkArrow {
+  flex-shrink: 0;
+  display: flex;
+  color: var(--mantine-primary-color-filled);
+  opacity: 0;
+  translate: -4px 0;
+  transition:
+    opacity 180ms ease,
+    translate 180ms ease;
+}
+
+.sidebar[data-collapsed] .linkLabel,
+.sidebar[data-collapsed] .linkArrow,
+.sidebar[data-collapsed] .linkBadge {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- active -- */
+.link[data-active] {
+  background: var(--brand-tint);
+  font-weight: 650;
+}
+
+.link[data-active] .linkIcon {
+  color: #fff;
+  background: var(--brand-gradient);
+  border-color: transparent;
+  box-shadow: 0 4px 11px color-mix(in srgb, var(--brand-to) 38%, transparent);
+}
+
+.link[data-active] .linkArrow {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* Accent bar bleeds to the rail edge, outside the nav's own padding. */
+.link[data-active]::before {
   content: "";
   position: absolute;
-  right: 0;
-  width: 22px;
+  inset-inline-start: -12px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 3px;
   height: 22px;
-  pointer-events: none;
-  --fill: var(--mantine-primary-color-filled);
+  border-radius: 0 3px 3px 0;
+  background: var(--brand-gradient);
 }
-.link[aria-current="page"]::before { bottom: 100%; background: radial-gradient(circle at 0 0, transparent 21.5px, var(--fill) 22px); }
-.link[aria-current="page"]::after { top: 100%; background: radial-gradient(circle at 0 100%, transparent 21.5px, var(--fill) 22px); }
 
-.theme { margin-left: 6px; }
-.sidebar[data-collapsed] .theme { margin-left: 10px; }
+.sidebar[data-collapsed] .link[data-active]::before {
+  display: none;
+}
+
+/* -------------------------------------------------------------- sublist --- */
+.sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 3px 0 6px 46px;
+  padding-inline-start: 10px;
+  border-inline-start: 1px solid var(--mantine-color-default-border);
+}
+
+.sublink {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 9px;
+  border-radius: var(--mantine-radius-sm);
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+  text-decoration: none;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.sublink:hover {
+  background: var(--mantine-color-default-hover);
+  color: var(--mantine-color-text);
+}
+
+.sublink[data-active] {
+  color: var(--mantine-primary-color-filled);
+  font-weight: 650;
+}
+
+.subdot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--mantine-color-default-border);
+}
+
+.sublink[data-active] .subdot {
+  background: var(--mantine-primary-color-filled);
+}
+
+/* ------------------------------------------------------- collapse toggle -- */
+.collapseToggle {
+  position: absolute;
+  top: 72px;
+  right: -13px;
+  z-index: 12;
+  background: var(--mantine-color-body);
+  box-shadow: var(--mantine-shadow-sm);
+}

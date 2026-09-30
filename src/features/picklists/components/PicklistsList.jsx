@@ -1,74 +1,114 @@
-import { Badge, Group, Loader, Paper, SimpleGrid, Stack, Title, Tooltip } from "@mantine/core";
-import { IconFiles, IconSettingsCheck, IconX } from "@tabler/icons-react";
+import { Badge, Box, Group, Paper, Skeleton, Stack, Text, Tooltip } from "@mantine/core";
+import { IconAlertTriangle, IconEyeOff, IconList, IconStarFilled } from "@tabler/icons-react";
 import groupBy from "lodash/groupBy";
 import { useGetAllPicklistsQuery } from "../../../api/picklist";
-import Placeholder from "../../../components/Placeholder";
+import EmptyState from "../../../components/EmptyState";
+import PicklistBadge from "../../../components/PicklistBadge";
 import { usePicklists } from "../../../context/PicklistContext";
+import AddPicklistModalButton from "./AddPicklistModalButton";
 import DeletePicklistButton from "./DeletePicklistButton";
 import EditPicklistModalButton from "./EditPicklistModalButton";
 
 function groupPicklistsByParentPicklist(picklists = []) {
-  const grouped = groupBy(picklists, (p) => p.parentPicklist?._id || null);
+  const grouped = groupBy(picklists, (picklist) => picklist.parentPicklist?._id || null);
 
   return Object.values(grouped)
     .map((children) => ({ parentPicklist: children[0].parentPicklist, picklists: children }))
-    .sort((a, b) => {
-      const titleA = a.parentPicklist?.title || "";
-      const titleB = b.parentPicklist?.title || "";
-
-      return titleA.localeCompare(titleB);
-    });
+    .sort((a, b) => (a.parentPicklist?.title || "").localeCompare(b.parentPicklist?.title || ""));
 }
+
+const PicklistRow = ({ picklist, renderItem, withDivider }) => (
+  <Group gap="sm" wrap="nowrap" px="sm" py={10} style={withDivider ? { borderTop: "1px solid var(--mantine-color-default-border)" } : undefined}>
+    <Group gap="xs" wrap="wrap" mr="auto" miw={0}>
+      {renderItem ? renderItem(picklist) : <PicklistBadge item={picklist} />}
+
+      {picklist.isDefault && (
+        <Tooltip label="Default value for new records" withArrow>
+          <Badge size="sm" variant="light" color="orange" leftSection={<IconStarFilled size={10} />}>
+            Default
+          </Badge>
+        </Tooltip>
+      )}
+
+      {picklist.isActive === false && (
+        <Tooltip label="Hidden from new records" withArrow>
+          <Badge size="sm" variant="light" color="gray" leftSection={<IconEyeOff size={11} />}>
+            Inactive
+          </Badge>
+        </Tooltip>
+      )}
+
+      {picklist.acronym && (
+        <Text fz="xs" c="dimmed" ff="monospace">
+          {picklist.acronym}
+        </Text>
+      )}
+    </Group>
+
+    <Group gap={2} wrap="nowrap" style={{ flexShrink: 0 }}>
+      <EditPicklistModalButton picklist={picklist} />
+      <DeletePicklistButton picklistId={picklist._id} />
+    </Group>
+  </Group>
+);
 
 const PicklistsList = ({ children }) => {
   const { featureName, scope, resource, field, parentPicklist } = usePicklists();
-  const { data, isLoading, isError } = useGetAllPicklistsQuery({ query: { scope, resource, field, parentPicklist } });
 
-  if (isLoading) return <Loader />;
+  const { data, isLoading, isError, error } = useGetAllPicklistsQuery({ query: { scope, resource, field, parentPicklist } });
 
-  if (isError) return <Placeholder title="Error" icon={<IconX size={50} />} />;
+  if (isLoading) {
+    return (
+      <Stack gap="xs">
+        {Array.from({ length: 5 }, (_, index) => (
+          <Skeleton key={index} height={42} radius="sm" />
+        ))}
+      </Stack>
+    );
+  }
 
-  if (!data?.length) return <Placeholder title={`No ${featureName} to display`} icon={<IconFiles size={50} />} />;
+  if (isError) {
+    return <EmptyState variant="error" title={`Could not load ${featureName}`} description={error?.message} icon={<IconAlertTriangle size={26} />} />;
+  }
 
-  const groupedPicklists = groupPicklistsByParentPicklist(data);
+  if (!data?.length) {
+    return (
+      <EmptyState
+        title={`No ${featureName} yet`}
+        description="Values you add here become selectable everywhere this list is used."
+        icon={<IconList size={26} />}
+        action={<AddPicklistModalButton />}
+      />
+    );
+  }
 
-  return groupedPicklists.map(({ parentPicklist, picklists }) => (
-    <Stack key={parentPicklist?._id || "no-parent"} gap={"xs"}>
-      {parentPicklist && (
-        <Group gap={"xs"}>
-          <Title order={5} fw={600} tt={"capitalize"}>
-            {parentPicklist.title}
-          </Title>
+  const grouped = groupPicklistsByParentPicklist(data);
 
-          <Badge>{picklists.length} picklists</Badge>
-        </Group>
-      )}
+  return (
+    <Stack gap="md">
+      {grouped.map(({ parentPicklist: parent, picklists }) => (
+        <Box key={parent?._id || "ungrouped"}>
+          {parent && (
+            <Group gap="xs" mb="xs">
+              <Text fz="sm" fw={650} tt="capitalize">
+                {parent.title}
+              </Text>
 
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
-        {picklists.map((picklist) => {
-          return (
-            <Paper key={picklist._id} p={"sm"}>
-              <Group gap={0}>
-                <Group gap={"xs"} mr={"auto"}>
-                  {children ? children(picklist) : <Badge color={picklist.color}>{picklist.title}</Badge>}
+              <Badge size="sm" variant="default">
+                {picklists.length}
+              </Badge>
+            </Group>
+          )}
 
-                  {picklist.isDefault && (
-                    <Tooltip label="Default">
-                      <IconSettingsCheck size={18} />
-                    </Tooltip>
-                  )}
-                </Group>
-
-                <EditPicklistModalButton picklist={picklist} />
-
-                <DeletePicklistButton picklistId={picklist._id} />
-              </Group>
-            </Paper>
-          );
-        })}
-      </SimpleGrid>
+          <Paper style={{ overflow: "hidden" }}>
+            {picklists.map((picklist, index) => (
+              <PicklistRow key={picklist._id} picklist={picklist} renderItem={children} withDivider={index > 0} />
+            ))}
+          </Paper>
+        </Box>
+      ))}
     </Stack>
-  ));
+  );
 };
 
 export default PicklistsList;

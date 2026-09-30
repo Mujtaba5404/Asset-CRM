@@ -29,7 +29,7 @@ const AssetSubCategories = () => {
           <Group gap={"xs"} mr={"auto"}>
             <Badge color={picklist.color}>{picklist.title}</Badge>
 
-            {picklist.meta.requiresEmployee && (
+            {picklist.meta?.requiresEmployee && (
               <Tooltip label="Employee is mandatory for assets in this sub-category">
                 <IconUserExclamation size={18} />
               </Tooltip>

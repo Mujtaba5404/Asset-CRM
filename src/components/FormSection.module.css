@@ -1,0 +1,29 @@
+/* Two-column form layout.
+   A container query, not a media query: the drawer keeps a fixed width however
+   wide the viewport is, so the columns must respond to the panel, not the page.
+   The query measures `.root`; `.columns` is the element it styles, because a
+   container cannot size itself from its own query. */
+.root {
+  container-type: inline-size;
+  width: 100%;
+}
+
+.columns {
+  display: grid;
+  gap: var(--mantine-spacing-md);
+  align-items: start;
+  grid-template-columns: 1fr;
+}
+
+@container (min-width: 680px) {
+  .columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+  min-width: 0;
+}

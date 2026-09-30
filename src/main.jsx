@@ -13,6 +13,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import mantineTheme from "../mantine.config.js";
 import App from "./App.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -27,7 +28,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <MantineProvider theme={theme} defaultColorScheme="auto">
           <ModalsProvider>
             <Notifications w={350} autoClose={5000} position="bottom-center" />
-            <App />
+
+            {/* Inside MantineProvider so the fallback is themed, and outside the
+                router so a crash anywhere in the app still renders it. */}
+            <ErrorBoundary>
+              <App />
+            </ErrorBoundary>
           </ModalsProvider>
         </MantineProvider>
       </QueryClientProvider>

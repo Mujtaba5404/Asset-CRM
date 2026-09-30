@@ -1,15 +1,14 @@
-import { Route } from "react-router-dom";
-import AssetTable from "../features/assets/AssetTable";
+import { Navigate, Route } from "react-router-dom";
+import Protected from "../components/Protected";
 import AssetDetails from "../features/assets/AssetDetails";
-import AssetsLayout from "../layouts/assets";
-import Dashboard from "../pages/Dashboard";
+import AssetsPage from "../pages/AssetsPage";
 
 export const assetRoutes = (
-  <Route path="assets">
-    <Route element={<AssetsLayout />}>
-      <Route index element={<AssetTable />} />
-      <Route path="dashboard" element={<Dashboard />} />
-    </Route>
+  <Route path="assets" element={<Protected resource="asset" action="read" />}>
+    <Route index element={<AssetsPage />} />
+
+    {/* The dashboard used to live under /assets — keep old links working. */}
+    <Route path="dashboard" element={<Navigate to="/dashboard" replace />} />
 
     <Route path=":id" element={<AssetDetails />} />
   </Route>

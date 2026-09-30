@@ -1,13 +1,9 @@
-import { Paper, Text } from "@mantine/core";
+import EmptyState from "./EmptyState";
 
-const Placeholder = ({ title = "", icon }) => {
-  return (
-    <Paper w={"100%"} p={"md"} ta={"center"} c={"dimmed"}>
-      {icon}
-
-      <Text size="lg">{title}</Text>
-    </Paper>
-  );
-};
+/**
+ * Back-compat wrapper around <EmptyState />, kept so existing call sites
+ * (`<Placeholder title=... icon=... />`) keep working unchanged.
+ */
+const Placeholder = ({ title = "", icon, ...props }) => <EmptyState title={title} icon={icon} {...props} />;
 
 export default Placeholder;
