@@ -1,4 +1,4 @@
-import { IconLayoutDashboard, IconListDetails, IconPackage } from "@tabler/icons-react";
+import { IconChartHistogram, IconLayoutDashboard, IconListDetails, IconPackage } from "@tabler/icons-react";
 
 /**
  * Primary navigation — the single source of truth for the sidebar.
@@ -14,6 +14,7 @@ export const NAV_SECTIONS = [
     links: [
       { title: "Dashboard", path: "/dashboard", icon: IconLayoutDashboard },
       { title: "Assets", path: "/assets", icon: IconPackage, permission: { resource: "asset", action: "read" } },
+      { title: "Summary", path: "/summary", icon: IconChartHistogram, permission: { resource: "asset", action: "read" } },
     ],
   },
   {

@@ -24,6 +24,21 @@ export const useGetAssetByIdQuery = (assetId) => {
   });
 };
 
+/**
+ * Cross-tab of the register: one bucket per `primaryGroup` value, each broken
+ * down by `secondaryGroup`, with counts and purchase totals at every level.
+ *
+ * Both groups are asset field names — see ASSET_GROUP_FIELDS for the ones the
+ * UI offers.
+ */
+export const useGetAssetsSummaryByGroupQuery = (params) => {
+  return useQuery({
+    queryKey: ["assets", "summary", "byGroup", params],
+    queryFn: () => api.get("assets/summary/byGroup", { params }).then(({ data }) => data),
+    enabled: Boolean(params?.primaryGroup && params?.secondaryGroup),
+  });
+};
+
 export const useCreateAssetMutation = () => {
   const queryAsset = useQueryClient();
 

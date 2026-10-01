@@ -5,7 +5,7 @@ import AppLayout from "./layouts/AppLayout";
 import { HOME_PATH } from "./layouts/navigation";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-import { assetRoutes } from "./routes/assets";
+import { assetRoutes, assetSummaryRoutes } from "./routes/assets";
 import { legacySettingsRoutes, settingsRoutes } from "./routes/settings";
 
 const App = () => (
@@ -18,6 +18,7 @@ const App = () => (
         <Route path="dashboard" element={<Dashboard />} />
 
         {assetRoutes}
+        {assetSummaryRoutes}
         {settingsRoutes}
         {legacySettingsRoutes}
       </Route>
