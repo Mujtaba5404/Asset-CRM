@@ -3,24 +3,25 @@ import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { useUpdateAssetMutation } from "../../api/asset";
 import FormDrawer from "../../components/FormDrawer";
-import ImageUploadInput from "../../components/ImageUploadInput";
+import AttachmentsUpload from "../attachments/AttachmentsUpload";
 import { assetValidation, toAssetFormValues, toAssetPayload } from "./assetFormValues";
 import AssetForm from "./AssetForm";
 
 const EditAssetModal = ({ asset, isOpen = false, onClose = () => {} }) => {
   const updateAssetMutation = useUpdateAssetMutation();
 
-  // Held outside the form: the update endpoint takes JSON, so the files are
-  // collected here and uploaded separately once that endpoint exists. The seed
-  // is reset during render rather than in an effect, so the drawer never paints
-  // the previous record's photos for a frame.
+  // Held outside the form: the update endpoint takes JSON, so the newly picked
+  // files are collected here and uploaded separately once that endpoint exists.
+  // AttachmentsUpload only handles `File`s, so this starts empty rather than
+  // with the stored attachments. The seed is reset during render rather than in
+  // an effect, so the drawer never paints the previous record's files for a frame.
   const seed = `${isOpen}:${asset?._id}:${asset?.updatedAt}`;
   const [imagesSeed, setImagesSeed] = useState(seed);
-  const [images, setImages] = useState(asset?.images ?? []);
+  const [images, setImages] = useState([]);
 
   if (imagesSeed !== seed) {
     setImagesSeed(seed);
-    setImages(asset?.images ?? []);
+    setImages([]);
   }
 
   const form = useForm({ initialValues: toAssetFormValues(asset), validate: assetValidation });
@@ -43,7 +44,7 @@ const EditAssetModal = ({ asset, isOpen = false, onClose = () => {} }) => {
 
   const handleClose = () => {
     form.reset();
-    setImages(asset?.images ?? []);
+    setImages([]);
     onClose();
   };
 
@@ -62,7 +63,7 @@ const EditAssetModal = ({ asset, isOpen = false, onClose = () => {} }) => {
       onSubmit={form.onSubmit(handleSubmit)}
     >
       <Stack gap="md">
-        <ImageUploadInput value={images} onChange={setImages} />
+        <AttachmentsUpload value={images} onChange={setImages} />
 
         <AssetForm form={form} />
       </Stack>

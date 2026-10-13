@@ -1,22 +1,36 @@
-import { Box, Group, Stack, Text, Tooltip, useComputedColorScheme, useMantineTheme } from "@mantine/core";
+import { Box, Group, Progress, Stack, Text, Tooltip } from "@mantine/core";
 
-const BAR_HEIGHT = 10;
+const BAR_HEIGHT = 16;
+
+// A segment narrower than this cannot fit its name, so it relies on the tooltip and legend.
+const MIN_LABEL_SHARE = 12;
+
+// Rows without a configured colour still need distinct segments.
+const FALLBACK_COLORS = [
+  "blue",
+  "teal",
+  "grape",
+  "orange",
+  "cyan",
+  "pink",
+  "indigo",
+  "lime",
+];
 
 /**
- * Horizontal bar breakdown.
+ * Part-to-whole breakdown as one segmented Mantine progress bar.
  *
- * Form: bars, because the job is comparing magnitude across named classes.
- * Colour: one hue by default (magnitude needs no identity channel). When a row
- * carries its own colour — a picklist's configured colour — the bar follows the
- * entity, so filtering the list never repaints the survivors.
+ * When a row carries its own colour — a picklist's configured colour — the
+ * segment follows the entity; otherwise it takes the next fallback hue.
  *
- * Every row shows its name and value as text, so nothing is encoded in colour
- * alone and no value is gated behind the tooltip.
+ * The legend below repeats every name, value and share as text, so small
+ * segments and colour alone never carry the information.
  */
-const BarBreakdown = ({ data = [], emptyMessage = "No data yet", valueFormatter = (value) => value, max: maxOverride }) => {
-  const theme = useMantineTheme();
-  const dark = useComputedColorScheme("light", { getInitialValueInEffect: true }) === "dark";
-
+const BarBreakdown = ({
+  data = [],
+  emptyMessage = "No data yet",
+  valueFormatter = (value) => value,
+}) => {
   if (!data.length) {
     return (
       <Text fz="sm" c="dimmed" py="lg" ta="center">
@@ -25,55 +39,84 @@ const BarBreakdown = ({ data = [], emptyMessage = "No data yet", valueFormatter 
     );
   }
 
-  const values = data.map((row) => Number(row.value) || 0);
-  const max = maxOverride ?? Math.max(...values, 1);
-  const total = values.reduce((sum, value) => sum + value, 0);
+  const total = data.reduce((sum, row) => sum + (Number(row.value) || 0), 0);
 
-  // Shade 6 reads well on white; shade 4 keeps >= 3:1 on the dark card surface.
-  const resolveColor = (color) => {
-    const swatches = color && theme.colors[color];
+  let fallbackIndex = 0;
 
-    if (!swatches) return "var(--viz-fill)";
+  const rows = data.map((row) => {
+    const value = Number(row.value) || 0;
 
-    return dark ? swatches[4] : swatches[6];
-  };
+    return {
+      ...row,
+      value,
+      share: total ? (value / total) * 100 : 0,
+      color:
+        row.color ||
+        (row.key === "other" || row.key === "unassigned"
+          ? "gray"
+          : FALLBACK_COLORS[fallbackIndex++ % FALLBACK_COLORS.length]),
+    };
+  });
 
   return (
-    <Stack gap="sm">
-      {data.map((row) => {
-        const value = Number(row.value) || 0;
-        const share = total ? Math.round((value / total) * 100) : 0;
-        const width = max ? Math.max((value / max) * 100, value > 0 ? 1.5 : 0) : 0;
+    <Stack gap="md">
+      {/* <Stack gap={4}>
+        {rows.map((row) => (
+          <Group key={row.key ?? row.label} gap="xs" wrap="nowrap">
+            <Box
+              w={8}
+              h={8}
+              style={{
+                borderRadius: 999,
+                background: `var(--mantine-color-${row.color}-filled)`,
+                flexShrink: 0,
+              }}
+            />
 
-        return (
-          <Tooltip key={row.key ?? row.label} label={`${row.label} · ${valueFormatter(value)} · ${share}% of total`} withArrow position="top">
-            <Box style={{ minHeight: 24, cursor: "default" }}>
-              <Group justify="space-between" wrap="nowrap" gap="sm" mb={5}>
-                <Text fz="sm" fw={500} tt="capitalize" truncate>
-                  {row.label}
-                </Text>
+            <Text fz="sm" tt="capitalize" truncate flex={1}>
+              {row.label}
+            </Text>
 
-                <Text fz="sm" fw={600} c="dimmed" style={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
-                  {valueFormatter(value)}
-                </Text>
-              </Group>
+            <Text
+              fz="sm"
+              fw={600}
+              style={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}
+            >
+              {valueFormatter(row.value)}
+            </Text>
 
-              <Box h={BAR_HEIGHT} style={{ background: "var(--viz-grid)", borderRadius: 999, overflow: "hidden" }}>
-                <Box
-                  h="100%"
-                  w={`${width}%`}
-                  style={{
-                    background: resolveColor(row.color),
-                    // Square at the baseline, 4px rounded at the data end.
-                    borderRadius: "0 4px 4px 0",
-                    transition: "width 320ms cubic-bezier(0.32, 0.72, 0, 1)",
-                  }}
-                />
-              </Box>
-            </Box>
+            <Text
+              fz="xs"
+              c="dimmed"
+              w={38}
+              ta="right"
+              style={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}
+            >
+              {Math.round(row.share)}%
+            </Text>
+          </Group>
+        ))}
+      </Stack> */}
+
+      <Progress.Root size={BAR_HEIGHT} radius="xl">
+        {rows.map((row) => (
+          <Tooltip
+            key={row.key ?? row.label}
+            tt={"capitalize"}
+            label={`${row.label} · ${valueFormatter(row.value)}`}
+            withArrow
+            position="top"
+          >
+            <Progress.Section value={row.share} color={row.color}>
+              {row.share >= MIN_LABEL_SHARE && (
+                <Progress.Label tt="capitalize">
+                  {Math.round(row.share)}%
+                </Progress.Label>
+              )}
+            </Progress.Section>
           </Tooltip>
-        );
-      })}
+        ))}
+      </Progress.Root>
     </Stack>
   );
 };

@@ -12,3 +12,15 @@ import { lazy } from "react";
 export const SettingsPage = lazy(() => import("../pages/Settings"));
 
 export const PicklistsPage = lazy(() => import("../pages/Picklists"));
+
+export const RolesPage = lazy(() => import("../pages/RolesPage"));
+
+export const DepreciationsPage = lazy(() => import("../pages/DepreciationsPage"));
+
+export const DepreciationDetails = lazy(() => import("../features/depreciations/DepreciationDetails"));
+
+export const AccessPage = lazy(() => import("../pages/AccessPage"));
+
+export const MaintenancePage =lazy(() => import("../pages/MaintenancePage"));
+
+export const MaintenanceDetails = lazy(() => import("../features/maintenance/MaintenanceDetails"));

@@ -2,9 +2,12 @@ import { Box, Button, Divider, Group, Paper, PasswordInput, SimpleGrid, Stack, T
 import { useForm } from "@mantine/form";
 import { useLocalStorage } from "@mantine/hooks";
 import { IconAt, IconHexagonLetterA, IconLock, IconPackage, IconShieldCheck, IconTrendingUp } from "@tabler/icons-react";
-import { memo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { memo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { useLoginMutation } from "../../api/auth";
+import { allAccessQuery, authUserId, findAccessOf } from "../../api/access";
+import { useLoginMutation } from "../../api/auth";
+import { toSessionAccess } from "../../hooks/useSessionAccess";
 
 const HIGHLIGHTS = [
   { icon: IconPackage, label: "Assets tracked", value: "1,284" },
@@ -88,7 +91,10 @@ BrandPanel.displayName = "BrandPanel";
 const Login = () => {
   const [, setAuth] = useLocalStorage({ key: "auth", getInitialValueInEffect: false });
   const navigate = useNavigate();
-  // const loginMutation = useLoginMutation();
+  const loginMutation = useLoginMutation();
+  const queryClient = useQueryClient();
+  // Signed in, still fetching permissions: keep the button busy.
+  const [opening, setOpening] = useState(false);
 
   const form = useForm({
     mode: "uncontrolled",
@@ -99,20 +105,33 @@ const Login = () => {
     },
   });
 
-  // const handleSubmit = (values) => {
-  //   loginMutation.mutate(values, {
-  //     onSuccess: ({ data }) => {
-  //       setAuth(data);
-  //       navigate(data?.indexPath || "/dashboard", { replace: true });
-  //     },
-  //   });
-  // };
-
+  // The response is the profile. Permissions come from the user's Access record,
+  // fetched before leaving so the app opens with its menu and pages in place
+  // instead of blank. If that fails, RequireAuth asks again and explains.
   const handleSubmit = (values) => {
-    // TODO: API lagne par ye hata kar loginMutation.mutate(...) wapas lagayein
-    setAuth({ name: "Super Admin", email: values.email });
+    loginMutation.mutate(values, {
+      onSuccess: async ({ data }) => {
+        let session = data;
 
-    navigate("/dashboard", { replace: true });
+        // Stored first: the API layer reads the token from it for the access call.
+        setAuth(data);
+        setOpening(true);
+
+        try {
+          // Cached, so the app shell reuses this list instead of asking again on arrival.
+          const list = await queryClient.fetchQuery(allAccessQuery());
+          session = { ...data, ...toSessionAccess(findAccessOf(list, authUserId(data))) };
+        } catch {
+          // Left to RequireAuth.
+        }
+
+        setAuth(session);
+        setOpening(false);
+
+        // The role's landing page; "/" picks the first screen the role can read.
+        navigate(session?.indexPath || "/", { replace: true });
+      },
+    });
   };
 
   return (
@@ -161,8 +180,8 @@ const Login = () => {
                 {...form.getInputProps("password")}
               />
 
-              <Button type="submit" size="md" mt="xs" fullWidth>
-                Sign in
+              <Button type="submit" mt="xs" fullWidth loading={loginMutation.isPending || opening}>
+                Login
               </Button>
 
               <Divider label="Asset360 CRM" labelPosition="center" />

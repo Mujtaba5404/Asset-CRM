@@ -13,7 +13,7 @@ const AssetsList = ({ query, hideColumns = [], withToolbar = true }) => (
   <Stack gap="sm">
     {withToolbar && (
       <>
-        <Group justify="space-between" gap="sm" wrap="wrap">
+        <Group justify="flex-end" gap="sm" wrap="wrap">
           <AssetFilters />
 
           <AddAssetModalButton />

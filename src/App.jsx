@@ -1,11 +1,15 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import HomeRedirect from "./components/HomeRedirect";
 import RequireAuth from "./components/RequireAuth";
 import Login from "./features/auth/Login";
 import AppLayout from "./layouts/AppLayout";
 import { HOME_PATH } from "./layouts/navigation";
-import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import { accessRoutes } from "./routes/access";
 import { assetRoutes, assetSummaryRoutes } from "./routes/assets";
+import { depreciationRoutes } from "./routes/depreciations";
+import { maintenanceRoutes } from "./routes/maintenance";
+import { roleRoutes } from "./routes/roles";
 import { legacySettingsRoutes, settingsRoutes } from "./routes/settings";
 
 const App = () => (
@@ -14,11 +18,17 @@ const App = () => (
 
     <Route element={<RequireAuth />}>
       <Route element={<AppLayout />}>
-        <Route index element={<Navigate to={HOME_PATH} replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        {/* The role's landing page, or the first screen it can read. */}
+        <Route index element={<HomeRedirect />} />
+        {/* The dashboard was folded into the summary — keep old links working. */}
+        <Route path="dashboard" element={<Navigate to={HOME_PATH} replace />} />
 
         {assetRoutes}
         {assetSummaryRoutes}
+        {depreciationRoutes}
+        {maintenanceRoutes}
+        {roleRoutes}
+        {accessRoutes}
         {settingsRoutes}
         {legacySettingsRoutes}
       </Route>

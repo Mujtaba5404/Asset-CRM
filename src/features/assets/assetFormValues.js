@@ -1,11 +1,16 @@
 import { toDateValue } from "../../utils/dateValue";
+import { isAssetStatus } from "./assetStatus";
 
 /** Picklist references arrive populated on read and are sent back as ids. */
 const toId = (value) => value?._id ?? value ?? null;
 
 export const ASSET_INITIAL_VALUES = {
   serialNumber: "",
-  description: "",
+  notes: "",
+  company: null,
+  employee: null,
+  // Form-only: mirrors the picked sub category's `meta.requiresEmployee`.
+  requiresEmployee: false,
   location: null,
   category: null,
   subCategory: null,
@@ -26,16 +31,20 @@ export const ASSET_INITIAL_VALUES = {
 /** Map a fetched asset onto form values. All dates become "YYYY-MM-DD" strings. */
 export const toAssetFormValues = (asset = {}) => ({
   serialNumber: asset.serialNumber || "",
-  description: asset.description || "",
+  notes: asset.notes || "",
+  company: toId(asset.company),
+  employee: toId(asset.employee),
+  requiresEmployee: !!asset.subCategory?.meta?.requiresEmployee,
   location: toId(asset.location),
   category: toId(asset.category),
   subCategory: toId(asset.subCategory),
-  status: toId(asset.status),
+  // Records saved while status was a picklist carry an id; make the user re-pick.
+  status: isAssetStatus(asset.status) ? asset.status : null,
   condition: toId(asset.condition),
   purchaseAmount: asset.purchaseAmount ?? "",
   purchaseDate: toDateValue(asset.purchaseDate),
-  hasExpiry: !!asset.hasExpiry,
-  expiryDate: toDateValue(asset.expiryDate),
+  hasExpiry: !!(asset.expiry?.hasExpiry ?? asset.hasExpiry),
+  expiryDate: toDateValue(asset.expiry?.expiryDate ?? asset.expiryDate),
   warranty: {
     hasWarranty: !!asset.warranty?.hasWarranty,
     startDate: toDateValue(asset.warranty?.startDate),
@@ -48,11 +57,12 @@ export const toAssetFormValues = (asset = {}) => ({
  * Strip the branches the user switched off, so turning off "has expiry" or
  * "under warranty" actually clears the stored dates instead of leaving orphans.
  */
-export const toAssetPayload = (values) => ({
+export const toAssetPayload = ({ requiresEmployee, hasExpiry, expiryDate, ...values }) => ({
   ...values,
+  employee: values.employee || null,
   purchaseAmount:
     values.purchaseAmount === "" ? null : Number(values.purchaseAmount),
-  expiryDate: values.hasExpiry ? values.expiryDate : undefined,
+  expiry: { hasExpiry, expiryDate: hasExpiry ? expiryDate : undefined },
   warranty: values.warranty.hasWarranty
     ? values.warranty
     : {
@@ -69,6 +79,11 @@ const required = (message) => (value) =>
 export const assetValidation = {
   serialNumber: (value) =>
     String(value ?? "").trim().length < 2 ? "Serial number is required" : null,
+  company: required("Company is required"),
+  employee: (value, values) =>
+    values.requiresEmployee && !value
+      ? "Employee is required for this sub category"
+      : null,
   location: required("Location is required"),
   category: required("Category is required"),
   subCategory: required("Sub category is required"),

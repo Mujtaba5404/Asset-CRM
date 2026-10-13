@@ -1,4 +1,4 @@
-import { Badge, Button, Drawer, Group, Pill, Stack, Text, TextInput } from "@mantine/core";
+import { Badge, Button, Drawer, Group, MultiSelect, Pill, Stack, Text, TextInput } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { IconFilter, IconX } from "@tabler/icons-react";
@@ -59,6 +59,20 @@ const AssetFilters = () => {
           placeholder="Pick a date range"
           value={filters[field.key] ?? [null, null]}
           onChange={(value) => setFilters({ [field.key]: value })}
+        />
+      );
+    }
+
+    if (field.type === "enum") {
+      return (
+        <MultiSelect
+          key={field.key}
+          label={field.label}
+          placeholder={`Any ${field.label.toLowerCase()}`}
+          data={field.options}
+          value={filters[field.key] || []}
+          onChange={(value) => setFilters({ [field.key]: value })}
+          clearable
         />
       );
     }

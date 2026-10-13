@@ -2,9 +2,42 @@ import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 
+const BACKENDS = {
+  "/asset-api": "https://rv10n5m4-8003.inc1.devtunnels.ms",
+  "/auth-api": "https://rv10n5m4-8004.inc1.devtunnels.ms",
+};
+
+const rewriteSessionCookies = (response) => {
+  const cookies = response.headers["set-cookie"];
+
+  if (!cookies) return;
+
+  response.headers["set-cookie"] = cookies.map((cookie) =>
+    cookie
+      .replace(/;\s*Domain=[^;]*/gi, "")
+      .replace(/;\s*Path=[^;]*/gi, "; Path=/")
+      .replace(/;\s*SameSite=None/gi, "; SameSite=Lax")
+      .replace(/;\s*Secure/gi, "")
+      .replace(/;\s*Partitioned/gi, ""),
+  );
+};
+
+const proxy = Object.fromEntries(
+  Object.entries(BACKENDS).map(([prefix, target]) => [
+    prefix,
+    {
+      target,
+      changeOrigin: true,
+      rewrite: (path) => path.replace(new RegExp(`^${prefix}`), ""),
+      configure: (server) => server.on("proxyRes", rewriteSessionCookies),
+    },
+  ]),
+);
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: { port: 5173, strictPort: true, proxy },
   resolve: {
     alias: [
       // Several picklist features import as "src/..." — keep both spellings working.

@@ -4,9 +4,10 @@ import classes from "./FormSection.module.css";
 /**
  * A titled block of form fields: tinted icon tile, heading, one line of help
  * text, then the fields. Gives long forms a scannable structure instead of a
- * single undifferentiated column of inputs.
+ * single undifferentiated column of inputs. `action` sits at the right of the
+ * heading (a count badge, a toggle).
  */
-const FormSection = ({ icon, title, description, children, ...props }) => (
+const FormSection = ({ icon, title, description, action, children, ...props }) => (
   <Paper p="md" {...props}>
     <Group gap="sm" wrap="nowrap" align="flex-start">
       {icon && (
@@ -15,7 +16,7 @@ const FormSection = ({ icon, title, description, children, ...props }) => (
         </ThemeIcon>
       )}
 
-      <Box miw={0}>
+      <Box miw={0} flex={1}>
         <Text fz="sm" fw={650} lh={1.35}>
           {title}
         </Text>
@@ -26,6 +27,8 @@ const FormSection = ({ icon, title, description, children, ...props }) => (
           </Text>
         )}
       </Box>
+
+      {action}
     </Group>
 
     <Divider my="md" />

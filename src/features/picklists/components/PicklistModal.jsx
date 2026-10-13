@@ -60,6 +60,9 @@ const PicklistModal = ({ children, fieldsConfig = {} }) => {
               </Group>
             )}
             {...form.getInputProps("color")}
+            // An empty colour is stored as "", which Select counts as a value and shows its clear button for.
+            value={selectedColor || null}
+            onChange={(next) => form.setFieldValue("color", next ?? "")}
           />
         )}
 
@@ -70,24 +73,24 @@ const PicklistModal = ({ children, fieldsConfig = {} }) => {
             description="Used wherever a short code is needed, e.g. in generated asset tags"
             placeholder="EQ for Equipment"
             {...form.getInputProps("acronym")}
+            // Short codes are always uppercase, and spaces would break the generated tag.
+            onChange={(event) => form.setFieldValue("acronym", event.currentTarget.value.toUpperCase().replace(/\s+/g, ""))}
           />
         )}
 
         {children}
 
-        <Stack gap="sm">
-          {config.preserveTitleFormatting && (
-            <Switch label="Preserve title formatting" description="Keeps the original casing and spacing" {...form.getInputProps("preserveTitleFormatting", { type: "checkbox" })} />
-          )}
+        {config.preserveTitleFormatting && (
+          <Switch size="sm" label="Preserve title formatting" description="Keeps the original casing and spacing" {...form.getInputProps("preserveTitleFormatting", { type: "checkbox" })} />
+        )}
 
-          {config.isDefault && (
-            <Switch label={`Default ${featureName}`} description="Replaces the current default and is pre-selected on new records" {...form.getInputProps("isDefault", { type: "checkbox" })} />
-          )}
+        {config.isDefault && (
+          <Switch size="sm" label={`Default ${featureName}`} description="Replaces the current default and is pre-selected on new records" {...form.getInputProps("isDefault", { type: "checkbox" })} />
+        )}
 
-          {config.isActive && <Switch label="Active" description="Inactive values stay on existing records but can't be picked again" {...form.getInputProps("isActive", { type: "checkbox" })} />}
-        </Stack>
+        {config.isActive && <Switch size="sm" label="Active" description="Inactive values stay on existing records but can't be picked again" {...form.getInputProps("isActive", { type: "checkbox" })} />}
 
-        <Group gap="sm" justify="flex-end" mt="xs">
+        <Group gap="sm" justify="flex-end">
           <Button variant="default" onClick={closeModal} disabled={mutation.isPending} flex={{ base: 1, sm: "0 0 auto" }}>
             Cancel
           </Button>

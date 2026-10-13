@@ -139,6 +139,8 @@ const theme = {
       styles: {
         header: { borderBottom: "1px solid var(--mantine-color-default-border)" },
         title: { fontWeight: 650, fontSize: "var(--mantine-font-size-md)" },
+        // Mantine's body has no top padding; with the header rule, content would sit on the line.
+        body: { paddingTop: "var(--mantine-spacing-md)" },
       },
     }),
 

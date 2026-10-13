@@ -9,7 +9,7 @@ export const assetRoutes = (
     <Route index element={<AssetsPage />} />
 
     {/* The dashboard used to live under /assets — keep old links working. */}
-    <Route path="dashboard" element={<Navigate to="/dashboard" replace />} />
+    <Route path="dashboard" element={<Navigate to="/summary" replace />} />
 
     <Route path=":id" element={<AssetDetails />} />
   </Route>

@@ -1,8 +1,11 @@
 import { ActionIcon, Avatar, Box, Menu, Text, Tooltip, useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { useDisclosure, useLocalStorage } from "@mantine/hooks";
-import { IconLock, IconLogout, IconMoonStars, IconSunHigh, IconUser } from "@tabler/icons-react";
-import { useNavigate } from "react-router-dom";
+import { IconLock, IconLogout, IconMoonStars, IconSunHigh, IconUser, IconUserShield } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
+import { useLogoutMutation } from "../api/auth";
 import ChangePasswordModal from "../features/auth/ChangePasswordModal";
+import CanAccess from "./CanAccess";
 
 const UserMenu = () => {
   const [auth, , removeAuth] = useLocalStorage({ key: "auth", getInitialValueInEffect: false });
@@ -15,11 +18,23 @@ const UserMenu = () => {
 
   const [changePasswordOpened, { open: openChangePassword, close: closeChangePassword }] = useDisclosure(false);
 
-  const handleLogOut = () => {
-    removeAuth();
-    removeGlobalFilters();
+  const logoutMutation = useLogoutMutation();
+  const queryClient = useQueryClient();
 
-    navigate("/login", { replace: true });
+  /**
+   * Auth360 clears the session cookies; this side drops the stored profile
+   * either way, so a failed call can never strand someone in a signed-in shell.
+   */
+  const handleLogOut = () => {
+    logoutMutation.mutate(undefined, {
+      onSettled: () => {
+        removeAuth();
+        removeGlobalFilters();
+        queryClient.clear();
+
+        navigate("/login", { replace: true });
+      },
+    });
   };
 
   return (
@@ -43,14 +58,25 @@ const UserMenu = () => {
             <Text fz="xs" c="dimmed" truncate>
               {auth?.email || auth?.effectiveScope || "—"}
             </Text>
+            {auth?.accessRoles?.length > 0 && (
+              <Text fz="xs" c="dimmed" tt="capitalize" truncate>
+                Role · {auth.accessRoles.map((role) => role.title).join(", ")}
+              </Text>
+            )}
           </Box>
 
           <Menu.Divider />
 
-          {/* Configuration lives in the sidebar; this menu stays account-only. */}
           <Menu.Item leftSection={dark ? <IconSunHigh size={16} /> : <IconMoonStars size={16} />} onClick={toggleColorScheme} closeMenuOnClick={false}>
             {dark ? "Light mode" : "Dark mode"}
           </Menu.Item>
+
+          {/* Who can sign in, and with which role — shown only to roles that may manage it. */}
+          <CanAccess resource="access" action="read">
+            <Menu.Item component={Link} to="/access" leftSection={<IconUserShield size={16} />}>
+              Access
+            </Menu.Item>
+          </CanAccess>
 
           <Menu.Item onClick={openChangePassword} leftSection={<IconLock size={16} />}>
             Change password

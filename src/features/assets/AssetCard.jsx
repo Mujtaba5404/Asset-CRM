@@ -5,6 +5,7 @@ import PicklistBadge from "../../components/PicklistBadge";
 import formatAmount from "../../utils/formatAmount";
 import formatDate from "../../utils/formatDate";
 import getAbbreviation from "../../utils/getAbbreviation";
+import { toStatusItem } from "./assetStatus";
 import AssetTableRowMenu from "./AssetTableRowMenu";
 import AssetWarrantyBadge from "./AssetWarrantyBadge";
 
@@ -27,7 +28,7 @@ const AssetCard = ({ asset }) => (
             </Text>
 
             <Text fz="xs" c="dimmed" lineClamp={2}>
-              {asset.description || "No description"}
+              {asset.notes || "No notes"}
             </Text>
           </Stack>
 
@@ -40,7 +41,7 @@ const AssetCard = ({ asset }) => (
               {asset.tag}
             </Badge>
           )}
-          <PicklistBadge item={asset.status} />
+          <PicklistBadge item={toStatusItem(asset.status)} />
           <PicklistBadge item={asset.condition} />
           <AssetWarrantyBadge warranty={asset.warranty} />
         </Group>

@@ -1,6 +1,7 @@
 import { Button, Group, Stack, Text, Title, rem } from "@mantine/core";
-import { IconArrowLeft, IconLayoutDashboard } from "@tabler/icons-react";
+import { IconArrowLeft, IconChartHistogram } from "@tabler/icons-react";
 import { Link, useNavigate } from "react-router-dom";
+import { HOME_PATH } from "../layouts/navigation";
 
 const NotFound = () => {
   const navigate = useNavigate();
@@ -25,8 +26,8 @@ const NotFound = () => {
             Go back
           </Button>
 
-          <Button component={Link} to="/dashboard" leftSection={<IconLayoutDashboard size={16} />}>
-            Go to dashboard
+          <Button component={Link} to={HOME_PATH} leftSection={<IconChartHistogram size={16} />}>
+            Go to summary
           </Button>
         </Group>
       </Stack>

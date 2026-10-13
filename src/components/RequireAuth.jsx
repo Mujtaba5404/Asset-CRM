@@ -38,14 +38,39 @@
 
 // export default RequireAuth;
 import { useLocalStorage } from "@mantine/hooks";
-import { Navigate, Outlet } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { SESSION_EXPIRED_EVENT } from "../api/index";
+import useSessionAccess from "../hooks/useSessionAccess";
 
 const RequireAuth = () => {
   const [auth, , removeAuth] = useLocalStorage({
     key: "auth",
     getInitialValueInEffect: false,
   });
+
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Loads what this user's roles allow. The shell renders straight away; links
+  // and buttons appear once the permissions are in.
+  useSessionAccess();
+
+  // The API layer raises this when a refresh could not save the session. Cached
+  // records are dropped along with it, so the next person to sign in on this
+  // machine never sees the previous session's data while their own loads.
+  useEffect(() => {
+    const handleExpiry = () => {
+      removeAuth();
+      queryClient.clear();
+      navigate("/login", { replace: true });
+    };
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleExpiry);
+
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpiry);
+  }, [navigate, queryClient, removeAuth]);
 
   const shouldLogout = !auth;
 

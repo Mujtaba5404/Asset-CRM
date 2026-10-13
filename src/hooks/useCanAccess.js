@@ -1,57 +1,62 @@
 import { useLocalStorage } from "@mantine/hooks";
-import { useMemo } from "react";
-
-/**
- * How to behave when the signed-in user carries NO `effectivePermissions` array.
- *
- * The login endpoint is still stubbed (see features/auth/Login.jsx), so the
- * stored auth object has no permission list yet. With `true` the UI stays fully
- * visible in that state instead of hiding every guarded control, which is what
- * forced the <CanAccess /> call sites to be commented out.
- *
- * Flip to `false` the moment the API starts returning `effectivePermissions`,
- * and the guards throughout the app become enforcing with no other changes.
- */
-const ALLOW_WHEN_PERMISSIONS_UNPROVISIONED = true;
+import { useCallback, useMemo } from "react";
 
 const normalize = (value) => (typeof value === "string" ? value.toLowerCase() : value);
 
-const useCanAccess = (resources = "", actions = [], options = { resourcesMode: "any", actionsMode: "any" }) => {
-  const [auth] = useLocalStorage({ key: "auth", getInitialValueInEffect: false });
+const DEFAULT_OPTIONS = { resourcesMode: "any", actionsMode: "any" };
 
-  // Read once into a local so the memo's inferred and declared dependencies match.
-  const effectivePermissions = auth?.effectivePermissions;
+/**
+ * `effectivePermissions` (the user's roles, merged — see useSessionAccess) →
+ * resource → Set(actions). `null` when the session carries no list yet.
+ */
+export const buildPermissionMap = (effectivePermissions) =>
+  Array.isArray(effectivePermissions) ? new Map(effectivePermissions.map((permission) => [normalize(permission.resource), new Set((permission.actions ?? []).map(normalize))])) : null;
 
-  const permissionMap = useMemo(() => {
-    if (!effectivePermissions?.length) {
-      return new Map();
-    }
+/**
+ * Whether the permission map grants `actions` on `resources`. Both may be a
+ * single value or a list; `options` decide if any or all of them must match.
+ *
+ * No list yet means the session's permissions are still loading, so nothing is
+ * granted until they arrive.
+ */
+export const hasAccess = (permissionMap, resources = "", actions = [], options = DEFAULT_OPTIONS) => {
+  if (!permissionMap?.size) return false;
 
-    return new Map(effectivePermissions.map((permission) => [normalize(permission.resource), new Set(permission.actions.map(normalize))]));
-  }, [effectivePermissions]);
+  const requiredResources = [resources].flat().map(normalize);
+  const requiredActions = [actions].flat().map(normalize);
 
-  if (!permissionMap.size) {
-    return ALLOW_WHEN_PERMISSIONS_UNPROVISIONED && !!auth;
-  }
+  const checkActions = (granted) => {
+    if (!granted?.size) return false;
 
-  const requiredResources = Array.isArray(resources) ? resources.map(normalize) : [normalize(resources)];
-  const requiredActions = Array.isArray(actions) ? actions.map(normalize) : [normalize(actions)];
-
-  const checkActions = (permissionActionsSet) => {
-    if (!permissionActionsSet?.size) return false;
-
-    return options.actionsMode === "all" ? requiredActions.every((action) => permissionActionsSet.has(action)) : requiredActions.some((action) => permissionActionsSet.has(action));
+    return options.actionsMode === "all" ? requiredActions.every((action) => granted.has(action)) : requiredActions.some((action) => granted.has(action));
   };
 
-  const resourceResults = requiredResources.map((resource) => {
-    const permissionActionsSet = permissionMap.get(resource);
+  const results = requiredResources.map((resource) => checkActions(permissionMap.get(resource)));
 
-    if (!permissionActionsSet) return false;
-
-    return checkActions(permissionActionsSet);
-  });
-
-  return options.resourcesMode === "all" ? resourceResults.every(Boolean) : resourceResults.some(Boolean);
+  return options.resourcesMode === "all" ? results.every(Boolean) : results.some(Boolean);
 };
+
+/**
+ * False until the session's permissions have loaded. Redirects wait for it, so
+ * a page opened directly is not bounced away before access is known.
+ */
+export const usePermissionsLoaded = () => {
+  const [auth] = useLocalStorage({ key: "auth", getInitialValueInEffect: false });
+
+  return Array.isArray(auth?.effectivePermissions);
+};
+
+/** `can(resource, action)` for components that check several things. */
+export const usePermissions = () => {
+  const [auth] = useLocalStorage({ key: "auth", getInitialValueInEffect: false });
+
+  const effectivePermissions = auth?.effectivePermissions;
+
+  const permissionMap = useMemo(() => buildPermissionMap(effectivePermissions), [effectivePermissions]);
+
+  return useCallback((resources, actions, options) => hasAccess(permissionMap, resources, actions, options), [permissionMap]);
+};
+
+const useCanAccess = (resources = "", actions = [], options = DEFAULT_OPTIONS) => usePermissions()(resources, actions, options);
 
 export default useCanAccess;

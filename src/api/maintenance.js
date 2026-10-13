@@ -1,0 +1,95 @@
+import { upperFirst } from "@mantine/hooks";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { showNotification } from "../notifications/showNotification";
+import api from "../api/index";
+
+export const useGetAllMaintenanceQuery = (params) => {
+  return useQuery({
+    queryKey: ["maintenance", "all", params],
+    queryFn: () => api.get("maintenance/all", { params }).then(({ data }) => data),
+  });
+};
+
+export const useGetMaintenanceWithPaginationQuery = (params) => {
+  return useQuery({
+    queryKey: ["maintenance", "paginated", params],
+    queryFn: () => api.get("maintenance", { params }).then(({ data }) => data),
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useGetMaintenanceByIdQuery = (maintenanceId) => {
+  return useQuery({
+    queryKey: ["maintenance", "detail", maintenanceId],
+    queryFn: () => api.get(`maintenance/${maintenanceId}`).then(({ data }) => data),
+    enabled: !!maintenanceId,
+  });
+};
+
+/** Takes multipart form data — see maintenanceToFormData. */
+export const useCreateMaintenanceMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload) => api.post("maintenance", payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      showNotification({
+        title: upperFirst("done!"),
+        message: upperFirst("maintenance successfully created"),
+        type: "success",
+      });
+    },
+    onError: (error) =>
+      showNotification({
+        title: upperFirst("error!"),
+        message: upperFirst(error.message || "error creating maintenance"),
+        type: "error",
+      }),
+  });
+};
+
+/** Takes multipart form data — see maintenanceToFormData. */
+export const useUpdateMaintenanceMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ maintenanceId, payload }) => api.patch(`maintenance/${maintenanceId}`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      showNotification({
+        title: upperFirst("done!"),
+        message: upperFirst("maintenance successfully updated"),
+        type: "success",
+      });
+    },
+    onError: (error) =>
+      showNotification({
+        title: upperFirst("error!"),
+        message: upperFirst(error.message || "error updating maintenance"),
+        type: "error",
+      }),
+  });
+};
+
+export const useDeleteMaintenanceMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (maintenanceId) => api.delete(`maintenance/${maintenanceId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      showNotification({
+        title: upperFirst("done!"),
+        message: upperFirst("maintenance successfully deleted"),
+        type: "success",
+      });
+    },
+    onError: (error) =>
+      showNotification({
+        title: upperFirst("error!"),
+        message: upperFirst(error.message || "error deleting maintenance"),
+        type: "error",
+      }),
+  });
+};

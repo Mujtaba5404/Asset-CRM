@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateAssetMutation } from "../../api/asset";
 import FormDrawer from "../../components/FormDrawer";
-import ImageUploadInput from "../../components/ImageUploadInput";
+import toFormData from "../../utils/toFormData";
+import AttachmentsUpload from "../attachments/AttachmentsUpload";
 import { ASSET_INITIAL_VALUES, assetValidation, toAssetPayload } from "./assetFormValues";
 import AssetForm from "./AssetForm";
 
@@ -35,7 +36,8 @@ const AddAssetModal = ({ isOpen = false, onClose = () => {} }) => {
   };
 
   const handleSubmit = (values) => {
-    createAssetMutation.mutate(toAssetPayload(values), {
+    // Multipart, so the picked images go up in the same request as the fields.
+    createAssetMutation.mutate(toFormData({ ...toAssetPayload(values), images }), {
       onSuccess: ({ data }) => {
         form.reset();
         setImages([]);
@@ -57,7 +59,7 @@ const AddAssetModal = ({ isOpen = false, onClose = () => {} }) => {
       onSubmit={form.onSubmit(handleSubmit)}
     >
       <Stack gap="md">
-        <ImageUploadInput value={images} onChange={setImages} />
+        <AttachmentsUpload value={images} onChange={setImages} />
 
         <AssetForm form={form} />
       </Stack>

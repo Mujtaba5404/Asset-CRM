@@ -3,11 +3,11 @@ import { ASSET_FILTER_FIELDS } from "./assetFilterFields";
 /**
  * The fields the summary endpoint can group by.
  *
- * Derived from the filter fields rather than listed again: every picklist the
- * list can filter on is a picklist the register can be grouped by, so adding a
+ * Derived from the filter fields rather than listed again: every picklist or enum
+ * the list can filter on is a field the register can be grouped by, so adding a
  * filter adds a grouping without touching this file.
  */
-export const ASSET_GROUP_FIELDS = ASSET_FILTER_FIELDS.filter((field) => field.type === "picklist");
+export const ASSET_GROUP_FIELDS = ASSET_FILTER_FIELDS.filter((field) => field.type === "picklist" || field.type === "enum");
 
 export const ASSET_GROUP_OPTIONS = ASSET_GROUP_FIELDS.map(({ key, label }) => ({ value: key, label }));
 

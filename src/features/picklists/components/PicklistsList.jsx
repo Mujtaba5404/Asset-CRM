@@ -1,5 +1,5 @@
-import { Badge, Box, Group, Paper, Skeleton, Stack, Text, Tooltip } from "@mantine/core";
-import { IconAlertTriangle, IconEyeOff, IconList, IconStarFilled } from "@tabler/icons-react";
+import { Badge, Box, Group, Paper, SimpleGrid, Skeleton, Stack, Text, Tooltip } from "@mantine/core";
+import { IconAlertTriangle, IconEyeOff, IconList, IconSettingsCheck } from "@tabler/icons-react";
 import groupBy from "lodash/groupBy";
 import { useGetAllPicklistsQuery } from "../../../api/picklist";
 import EmptyState from "../../../components/EmptyState";
@@ -17,16 +17,24 @@ function groupPicklistsByParentPicklist(picklists = []) {
     .sort((a, b) => (a.parentPicklist?.title || "").localeCompare(b.parentPicklist?.title || ""));
 }
 
-const PicklistRow = ({ picklist, renderItem, withDivider }) => (
-  <Group gap="sm" wrap="nowrap" px="sm" py={10} style={withDivider ? { borderTop: "1px solid var(--mantine-color-default-border)" } : undefined}>
+const PicklistRow = ({ picklist, renderItem }) => (
+  <Paper component={Group} gap="sm" wrap="nowrap" px="sm" py={8}>
     <Group gap="xs" wrap="wrap" mr="auto" miw={0}>
       {renderItem ? renderItem(picklist) : <PicklistBadge item={picklist} />}
 
+      {picklist.acronym && (
+        <Tooltip label="Acronym" withArrow>
+          <Badge size="sm" variant="default" ff="monospace" tt="uppercase">
+            {picklist.acronym}
+          </Badge>
+        </Tooltip>
+      )}
+
       {picklist.isDefault && (
         <Tooltip label="Default value for new records" withArrow>
-          <Badge size="sm" variant="light" color="orange" leftSection={<IconStarFilled size={10} />}>
-            Default
-          </Badge>
+          <Box c="dimmed" style={{ display: "flex" }} aria-label="Default">
+            <IconSettingsCheck size={18} />
+          </Box>
         </Tooltip>
       )}
 
@@ -37,19 +45,13 @@ const PicklistRow = ({ picklist, renderItem, withDivider }) => (
           </Badge>
         </Tooltip>
       )}
-
-      {picklist.acronym && (
-        <Text fz="xs" c="dimmed" ff="monospace">
-          {picklist.acronym}
-        </Text>
-      )}
     </Group>
 
     <Group gap={2} wrap="nowrap" style={{ flexShrink: 0 }}>
       <EditPicklistModalButton picklist={picklist} />
       <DeletePicklistButton picklistId={picklist._id} />
     </Group>
-  </Group>
+  </Paper>
 );
 
 const PicklistsList = ({ children }) => {
@@ -100,11 +102,12 @@ const PicklistsList = ({ children }) => {
             </Group>
           )}
 
-          <Paper style={{ overflow: "hidden" }}>
-            {picklists.map((picklist, index) => (
-              <PicklistRow key={picklist._id} picklist={picklist} renderItem={children} withDivider={index > 0} />
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="xs">
+            {/* The default value leads its group; the rest keep the server's order. */}
+            {[...picklists].sort((a, b) => Number(!!b.isDefault) - Number(!!a.isDefault)).map((picklist) => (
+              <PicklistRow key={picklist._id} picklist={picklist} renderItem={children} />
             ))}
-          </Paper>
+          </SimpleGrid>
         </Box>
       ))}
     </Stack>

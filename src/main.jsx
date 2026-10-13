@@ -16,8 +16,14 @@ import App from "./App.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import "./index.css";
 
+/**
+ * `staleTime` keeps a fresh result for 30s, so a component that mounts after a
+ * fetch (a row's edit drawer, a second select on the same list) reads the cache
+ * instead of firing the same request again. Saves still refresh straight away —
+ * every mutation invalidates its queries.
+ */
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { refetchOnWindowFocus: false } },
+  defaultOptions: { queries: { refetchOnWindowFocus: false, staleTime: 30 * 1000 } },
 });
 const theme = createTheme(mantineTheme);
 

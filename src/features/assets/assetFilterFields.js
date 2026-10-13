@@ -1,4 +1,5 @@
 import useFilters from "../../hooks/useFilters";
+import { ASSET_STATUS_OPTIONS } from "./assetStatus";
 
 /**
  * Every filter the assets list understands, in one place. The filter drawer, the
@@ -12,7 +13,7 @@ export const ASSET_FILTER_FIELDS = [
   { key: "category", label: "Category", type: "picklist" },
   { key: "subCategory", label: "Sub category", type: "picklist" },
   { key: "location", label: "Location", type: "picklist" },
-  { key: "status", label: "Status", type: "picklist" },
+  { key: "status", label: "Status", type: "enum", options: ASSET_STATUS_OPTIONS },
   { key: "condition", label: "Condition", type: "picklist" },
 ];
 

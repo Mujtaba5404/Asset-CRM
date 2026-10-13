@@ -9,6 +9,7 @@ import formatAmount from "../../utils/formatAmount";
 import formatDate from "../../utils/formatDate";
 import getAbbreviation from "../../utils/getAbbreviation";
 import AssetCard from "./AssetCard";
+import { toStatusItem } from "./assetStatus";
 import AssetTableRowMenu from "./AssetTableRowMenu";
 import AssetWarrantyBadge from "./AssetWarrantyBadge";
 
@@ -45,7 +46,7 @@ const ASSET_COLUMNS = [
           </Anchor>
 
           <Text fz="xs" c="dimmed" truncate>
-            {asset.description || "No description"}
+            {asset.notes || "No notes"}
           </Text>
         </Stack>
       </Group>
@@ -85,7 +86,7 @@ const ASSET_COLUMNS = [
     title: "Status",
     width: 130,
     textAlign: "center",
-    render: (asset) => <PicklistBadge item={asset.status} />,
+    render: (asset) => <PicklistBadge item={toStatusItem(asset.status)} />,
   },
   {
     accessor: "condition",

@@ -36,6 +36,8 @@ import StatCard from "../../components/StatCard";
 import useFilters from "../../hooks/useFilters";
 import formatAmount, { formatAmountCompact } from "../../utils/formatAmount";
 import formatNumber from "../../utils/formatNumber";
+import AssetBreakdowns from "./AssetBreakdowns";
+import { toStatusItem } from "./assetStatus";
 import {
   ASSET_GROUP_OPTIONS,
   DEFAULT_PRIMARY_GROUP,
@@ -43,8 +45,13 @@ import {
   groupLabel,
   resolveGroup,
 } from "./assetSummaryGroups";
+import capitalizeLetters from "src/utils/capitalizeLetters";
 
 const UNASSIGNED = "Unassigned";
+
+// Picklist buckets arrive with a title and colour; enum buckets (status) only carry the raw value as their id.
+const labelOf = (bucket) => bucket.title || toStatusItem(bucket._id)?.title || UNASSIGNED;
+const colorOf = (bucket) => bucket.color || toStatusItem(bucket._id)?.color;
 
 const count = (bucket) => Number(bucket?.count) || 0;
 const value = (bucket) => Number(bucket?.purchaseAmount) || 0;
@@ -90,13 +97,7 @@ const SummarySkeleton = () => (
   </Stack>
 );
 
-/**
- * The register summarised: headline figures, the two groupings charted against
- * each other, then the full report underneath.
- *
- * Both groupings live in the URL, so a view is shareable and the back button
- * walks through it — nothing about the pairing is baked into the screen.
- */
+
 const AssetSummary = () => {
   const { filters, setFilters } = useFilters();
   const [metric, setMetric] = useState("count");
@@ -115,15 +116,14 @@ const AssetSummary = () => {
 
   const toRow = (bucket) => ({
     key: bucket._id,
-    label: bucket.title || UNASSIGNED,
-    color: bucket.color,
+    label: labelOf(bucket),
+    color: colorOf(bucket),
     count: count(bucket),
     value: value(bucket),
     average: average(bucket),
   });
 
-  // Sorting a row and its children through the same comparator keeps the report
-  // consistent: whatever orders the groups also orders what sits inside them.
+
   const compare = (a, b) => {
     const delta = a[sort.key] - b[sort.key];
 
@@ -138,13 +138,13 @@ const AssetSummary = () => {
 
   // One series per secondary value, so every column in the chart shares a legend.
   const series = (data?.secondaryGroupWise ?? [])
-    .map((bucket) => ({ key: bucket._id, label: bucket.title || UNASSIGNED, color: bucket.color, value: read(bucket) }))
+    .map((bucket) => ({ key: bucket._id, label: labelOf(bucket), color: colorOf(bucket), value: read(bucket) }))
     .sort((a, b) => b.value - a.value);
 
   const chartGroups = (data?.primaryGroupWise ?? [])
     .map((bucket) => ({
       key: bucket._id,
-      label: bucket.title || UNASSIGNED,
+      label: labelOf(bucket),
       total: read(bucket),
       values: Object.fromEntries((bucket.secondaryGroupWise ?? []).map((cell) => [cell._id, read(cell)])),
     }))
@@ -263,12 +263,14 @@ const AssetSummary = () => {
 
         <StatCard
           label={`Largest ${groupLabel(primaryGroup).toLowerCase()}`}
-          value={largest?.label ?? "—"}
+          value={capitalizeLetters(largest?.label ?? "—")}
           hint={metricTotal ? `${format(largest.total)} · ${Math.round((largest.total / metricTotal) * 100)}% of total` : "No assets yet"}
           icon={<IconMapPin size={18} />}
           tone="blue"
         />
       </SimpleGrid>
+
+      <AssetBreakdowns />
 
       <Grid>
         <Grid.Col span={{ base: 12, lg: 8 }}>
